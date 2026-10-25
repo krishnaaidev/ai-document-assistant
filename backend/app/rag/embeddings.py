@@ -78,3 +78,7 @@ class EmbeddingService:
 
 
 embedding_service = EmbeddingService()
+
+
+def get_embedding_service() -> EmbeddingService:
+    return embedding_service

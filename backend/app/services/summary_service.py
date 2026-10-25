@@ -82,3 +82,48 @@ class SummaryService:
 
         result = await db.execute(stmt)
         return list(result.scalars().all()), total_count
+
+
+async def create_summary_record(
+    db: AsyncSession,
+    owner_id: uuid.UUID,
+    document_id: str,
+    summary_type: str,
+    content: str,
+    citations_json: Optional[Any] = None,
+) -> Summary:
+    doc_uuid = uuid.UUID(document_id) if isinstance(document_id, str) else document_id
+    st = SummaryType(summary_type) if isinstance(summary_type, str) else summary_type
+    summary = Summary(
+        id=uuid.uuid4(),
+        owner_id=owner_id,
+        document_id=doc_uuid,
+        summary_type=st,
+        content=content,
+        citations_json=citations_json,
+    )
+    db.add(summary)
+    await db.flush()
+    return summary
+
+
+async def get_summary_by_id(db: AsyncSession, summary_id: str) -> Optional[Summary]:
+    sum_uuid = uuid.UUID(summary_id) if isinstance(summary_id, str) else summary_id
+    result = await db.execute(select(Summary).where(Summary.id == sum_uuid))
+    return result.scalar_one_or_none()
+
+
+async def get_document_summaries(db: AsyncSession, document_id: str, owner_id: uuid.UUID) -> List[Summary]:
+    doc_uuid = uuid.UUID(document_id) if isinstance(document_id, str) else document_id
+    result = await db.execute(
+        select(Summary).where(Summary.document_id == doc_uuid, Summary.owner_id == owner_id).order_by(Summary.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def delete_summary_record(db: AsyncSession, summary_id: str) -> None:
+    sum_uuid = uuid.UUID(summary_id) if isinstance(summary_id, str) else summary_id
+    summary = await get_summary_by_id(db, summary_id)
+    if summary:
+        await db.delete(summary)
+        await db.flush()

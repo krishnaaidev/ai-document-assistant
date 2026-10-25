@@ -59,3 +59,22 @@ async def get_user_by_id(db: AsyncSession, user_id) -> Optional[User]:
     """Look up a user by their internal UUID."""
     result = await db.execute(select(User).where(User.id == user_id))
     return result.scalar_one_or_none()
+
+
+class UserService:
+    @staticmethod
+    async def get_or_create_user(
+        db: AsyncSession,
+        firebase_uid: str,
+        email: str,
+        display_name: Optional[str] = None,
+    ) -> User:
+        return await upsert_user(db, firebase_uid, email, display_name)
+
+    @staticmethod
+    async def get_by_firebase_uid(db: AsyncSession, firebase_uid: str) -> Optional[User]:
+        return await get_user_by_firebase_uid(db, firebase_uid)
+
+    @staticmethod
+    async def get_by_id(db: AsyncSession, user_id) -> Optional[User]:
+        return await get_user_by_id(db, user_id)

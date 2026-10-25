@@ -66,6 +66,11 @@ class DocumentDetailResponse(DocumentResponse):
     download_url: Optional[str] = None
 
 
+DocumentDetail = DocumentDetailResponse
+DocumentList = DocumentResponse
+DocumentSchema = DocumentResponse
+
+
 class DocumentContentResponse(BaseModel):
     id: uuid.UUID
     filename: str
@@ -116,12 +121,15 @@ class CollectionDocumentOperation(BaseModel):
 
 # Citation & Token Usage Schemas
 class CitationItem(BaseModel):
+    chunk_id: Optional[str] = None
     document_id: str
     filename: str
     page_num: Optional[int] = None
     chunk_index: Optional[int] = None
     relevance_score: Optional[float] = None
+    score: Optional[float] = None
     snippet: Optional[str] = None
+    excerpt: Optional[str] = None
 
 
 class TokenUsage(BaseModel):
@@ -258,3 +266,9 @@ class ReadyResponse(BaseModel):
     database: ServiceStatus
     pinecone: ServiceStatus
     firebase: ServiceStatus
+
+
+CitationSchema = CitationItem
+SummaryCreate = SummaryCreateRequest
+SummarySchema = SummaryResponse
+MessageSchema = MessageResponse

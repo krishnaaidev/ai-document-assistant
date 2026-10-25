@@ -49,8 +49,8 @@ class GeminiProvider(BaseLLMProvider):
         self._initialize_gemini()
 
     def _initialize_gemini(self):
-        if not self.api_key:
-            logger.warning("GEMINI_API_KEY is not configured. GeminiProvider running in fallback mode.")
+        if not self.api_key or self.settings.ENVIRONMENT == "test" or self.api_key.startswith("your_"):
+            logger.info("GeminiProvider running in local/fallback mode.")
             return
 
         try:
@@ -233,3 +233,7 @@ class LLMService:
 
 
 llm_service = LLMService()
+
+
+def get_llm_service() -> LLMService:
+    return llm_service

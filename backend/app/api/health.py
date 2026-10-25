@@ -14,7 +14,14 @@ router = APIRouter()
 @router.get("/health")
 async def health():
     """Basic health check — always returns 200 if the server is running."""
-    return {"status": "ok", "service": "AI Document Assistant API"}
+    from app.core.config import get_settings
+    settings = get_settings()
+    return {
+        "status": "healthy",
+        "service": "AI Document Assistant API",
+        "environment": settings.ENVIRONMENT,
+        "version": "1.0.0",
+    }
 
 
 @router.get("/ready")
@@ -37,8 +44,7 @@ async def ready(db: AsyncSession = Depends(get_db)):
     try:
         from app.rag.pinecone_service import get_pinecone_service
         svc = get_pinecone_service()
-        # Quick stats call to verify connection
-        svc.index.describe_index_stats()
+        svc._get_index()
         checks["pinecone"] = "ok"
     except Exception as e:
         logger.error(f"Health check: Pinecone failure: {e}")
@@ -68,5 +74,12 @@ async def ready(db: AsyncSession = Depends(get_db)):
     from fastapi.responses import JSONResponse
     return JSONResponse(
         status_code=status_code,
-        content={"status": "ready" if all_ok else "degraded", "checks": checks},
+        content={
+            "ready": all_ok,
+            "status": "ready" if all_ok else "degraded",
+            "database": {"status": checks["database"]},
+            "pinecone": {"status": checks["pinecone"]},
+            "firebase": {"status": checks["firebase"]},
+            "checks": checks,
+        },
     )

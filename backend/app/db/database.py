@@ -24,6 +24,14 @@ def build_engine():
         connect_args["statement_cache_size"] = 0
         logger.info("Using PgBouncer-compatible settings (statement_cache_size=0).")
 
+    if "sqlite" in db_url:
+        connect_args["check_same_thread"] = False
+        return create_async_engine(
+            db_url,
+            echo=settings.DEBUG,
+            connect_args=connect_args,
+        )
+
     engine = create_async_engine(
         db_url,
         echo=settings.DEBUG,

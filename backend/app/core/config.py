@@ -76,9 +76,13 @@ class Settings(BaseSettings):
 
     @property
     def async_database_url(self) -> str:
-        """Ensure the database URL uses the asyncpg driver."""
+        """Ensure the database URL uses the asyncpg driver, or aiosqlite for sqlite."""
         url = self.DATABASE_URL
-        if url.startswith("postgres://"):
+        if url.startswith("sqlite+aiosqlite://"):
+            return url
+        elif url.startswith("sqlite://"):
+            return url.replace("sqlite://", "sqlite+aiosqlite://", 1)
+        elif url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
         elif url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)

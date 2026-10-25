@@ -65,6 +65,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Embedding model preload warning: %s", e)
 
+    # Verify or initialize database tables
+    try:
+        from app.db.database import engine
+        from app.models.models import Base
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables verified.")
+    except Exception as e:
+        logger.warning("Database table check warning: %s", e)
+
     logger.info("Backend application startup complete.")
     yield
     logger.info("Backend application shutting down.")

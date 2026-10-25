@@ -197,10 +197,8 @@ class PineconeService:
 
             v_arr = np.array(emb, dtype=np.float32)
             v_norm = np.linalg.norm(v_arr)
-            sim = float(np.dot(q_vec, v_arr) / (q_norm * v_norm)) if (q_norm * v_norm) > 0 else 0.0
-
-            if sim >= threshold:
-                scored.append((sim, meta))
+            sim = float(np.dot(q_vec, v_arr) / v_norm) if v_norm > 0 else 0.0
+            scored.append((sim, meta))
 
         scored.sort(key=lambda x: x[0], reverse=True)
         for sim, meta in scored[:k]:
@@ -251,3 +249,7 @@ class PineconeService:
 
 
 pinecone_service = PineconeService()
+
+
+def get_pinecone_service() -> PineconeService:
+    return pinecone_service

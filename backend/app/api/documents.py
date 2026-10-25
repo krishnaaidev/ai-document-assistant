@@ -27,7 +27,7 @@ from app.storage.firebase_storage import delete_file, upload_file
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
-router = APIRouter()
+router = APIRouter(prefix="/documents", tags=["documents"])
 
 ALLOWED_CONTENT_TYPES = {
     "application/pdf",
@@ -277,18 +277,24 @@ async def get_document_content(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Get the extracted text content of a document.
-    Returns a signed URL for the original file and extracted text preview.
-    """
     doc = await get_document_by_id(db, document_id)
     _check_ownership(doc, current_user)
 
-    if doc.processing_status != ProcessingStatus.COMPLETED:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Document has not finished processing.",
-        )
+    content_text = ""
+    try:
+        from app.storage.firebase_storage import get_file_bytes
+        file_bytes = await get_file_bytes(doc.storage_path)
+        if doc.content_type == "text/plain":
+            content_text = file_bytes.decode("utf-8", errors="replace")
+        elif doc.content_type == "application/pdf":
+            from app.rag.document_processor import DocumentProcessor
+            processor = DocumentProcessor()
+            pages = processor.extract_text_from_pdf(file_bytes)
+            content_text = "\n\n".join(p[1] for p in pages)
+        else:
+            content_text = file_bytes.decode("utf-8", errors="replace")
+    except Exception as e:
+        logger.warning(f"Could not load document text for {doc.id}: {e}")
 
     from app.storage.firebase_storage import get_signed_url
 
@@ -299,8 +305,12 @@ async def get_document_content(
         signed_url = None
 
     return {
+        "id": str(document_id),
         "document_id": str(document_id),
         "filename": doc.filename,
         "signed_url": signed_url,
         "content_type": doc.content_type,
+        "content": content_text,
+        "page_count": doc.page_count or 1,
+        "chunk_count": doc.chunk_count or 1,
     }

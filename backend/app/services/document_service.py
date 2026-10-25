@@ -174,3 +174,100 @@ class DocumentService:
         await db.commit()
         await db.refresh(job)
         return job
+
+
+async def create_document_record(
+    db: AsyncSession,
+    document_id: str,
+    owner_id: uuid.UUID,
+    filename: str,
+    content_type: str,
+    file_size: int,
+    storage_path: str,
+    collection_id: Optional[str] = None,
+) -> Document:
+    doc_uuid = uuid.UUID(document_id) if isinstance(document_id, str) else document_id
+    coll_uuid = uuid.UUID(collection_id) if collection_id else None
+    doc = Document(
+        id=doc_uuid,
+        owner_id=owner_id,
+        filename=filename,
+        content_type=content_type,
+        file_size=file_size,
+        file_hash="",
+        storage_path=storage_path,
+        collection_id=coll_uuid,
+        processing_status=ProcessingStatus.UPLOADED,
+    )
+    db.add(doc)
+    await db.flush()
+    return doc
+
+
+async def get_document_by_id(db: AsyncSession, document_id: str) -> Optional[Document]:
+    doc_uuid = uuid.UUID(document_id) if isinstance(document_id, str) else document_id
+    result = await db.execute(select(Document).where(Document.id == doc_uuid))
+    return result.scalar_one_or_none()
+
+
+async def delete_document_record(db: AsyncSession, document_id: str) -> None:
+    doc_uuid = uuid.UUID(document_id) if isinstance(document_id, str) else document_id
+    doc = await get_document_by_id(db, document_id)
+    if doc:
+        await db.delete(doc)
+        await db.flush()
+
+
+async def update_document_status(
+    db: AsyncSession,
+    document_id: str,
+    status: ProcessingStatus,
+    clear_error: bool = False,
+) -> Optional[Document]:
+    doc = await get_document_by_id(db, document_id)
+    if doc:
+        doc.processing_status = status
+        if clear_error:
+            doc.processing_error = None
+        await db.flush()
+    return doc
+
+
+async def list_user_documents(
+    db: AsyncSession,
+    owner_id: uuid.UUID,
+    page: int = 1,
+    page_size: int = 20,
+    search: Optional[str] = None,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
+    content_type: Optional[str] = None,
+    collection_id: Optional[str] = None,
+    status_filter: Optional[str] = None,
+) -> dict:
+    from app.schemas.schemas import PaginationMetadata, PaginatedResponse, DocumentDetailResponse
+    coll_uuid = uuid.UUID(collection_id) if collection_id else None
+    proc_status = ProcessingStatus(status_filter) if status_filter else None
+    sort_desc = sort_order.lower() == "desc"
+
+    items, total_count = await DocumentService.list_documents(
+        db=db,
+        owner_id=owner_id,
+        collection_id=coll_uuid,
+        processing_status=proc_status,
+        search=search,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_desc=sort_desc,
+    )
+    total_pages = (total_count + page_size - 1) // page_size if total_count > 0 else 0
+    return {
+        "items": items,
+        "pagination": {
+            "page": page,
+            "page_size": page_size,
+            "total_count": total_count,
+            "total_pages": total_pages,
+        },
+    }

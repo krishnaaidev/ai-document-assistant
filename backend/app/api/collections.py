@@ -49,7 +49,8 @@ async def list_collections(
     items = []
     for c in collections:
         resp = CollectionResponse.model_validate(c)
-        resp.document_count = len(c.documents) if c.documents else 0
+        docs = c.__dict__.get("documents")
+        resp.document_count = len(docs) if docs is not None else 0
         items.append(resp)
 
     total_pages = (total_count + page_size - 1) // page_size if page_size > 0 else 0
@@ -105,7 +106,8 @@ async def update_collection(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
 
     resp = CollectionResponse.model_validate(collection)
-    resp.document_count = len(collection.documents) if collection.documents else 0
+    docs = collection.__dict__.get("documents")
+    resp.document_count = len(docs) if docs is not None else 0
     return resp
 
 

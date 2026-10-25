@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import List, Optional, Any
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -20,22 +20,31 @@ logger = logging.getLogger(__name__)
 class RAGPipeline:
     """Orchestrates the full RAG question-answering flow."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Optional[AsyncSession] = None):
         self.db = db
 
     async def ask(
         self,
         question: str,
-        conversation_id: Optional[str],
-        owner: User,
+        conversation_id: Optional[str] = None,
+        owner: Optional[User] = None,
+        user: Optional[User] = None,
         document_id: Optional[str] = None,
         collection_id: Optional[str] = None,
+        db: Optional[AsyncSession] = None,
     ) -> ChatResponse:
         """Execute the complete RAG pipeline."""
+        if db is not None:
+            self.db = db
+
+        active_owner = owner or user
+        if active_owner is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Owner/User must be provided")
+
         # ── Step 1: Get or create conversation ────────────────────────────
         conversation = await self._get_or_create_conversation(
             conversation_id=conversation_id,
-            owner=owner,
+            owner=active_owner,
             question=question,
             document_id=document_id,
             collection_id=collection_id,
@@ -43,9 +52,9 @@ class RAGPipeline:
 
         # ── Step 2: Verify document/collection ownership ───────────────────
         if document_id:
-            await self._verify_document_ownership(document_id, owner)
+            await self._verify_document_ownership(document_id, active_owner)
         if collection_id:
-            await self._verify_collection_ownership(collection_id, owner)
+            await self._verify_collection_ownership(collection_id, active_owner)
 
         # ── Step 3: Generate query embedding ──────────────────────────────
         embedding_service = get_embedding_service()
@@ -58,7 +67,7 @@ class RAGPipeline:
         pinecone = get_pinecone_service()
         chunks = pinecone.search_similar(
             query_embedding=query_embedding,
-            owner_uid=owner.firebase_uid,
+            owner_uid=active_owner.firebase_uid,
             top_k=settings.TOP_K,
             document_id=document_id,
             collection_id=collection_id,
@@ -78,12 +87,12 @@ class RAGPipeline:
         # ── Step 8: Save messages to PostgreSQL ────────────────────────────
         citations_data = [
             {
-                "chunk_id": c.chunk_id,
+                "chunk_id": getattr(c, "chunk_id", None),
                 "document_id": c.document_id,
                 "filename": c.filename,
                 "page_num": c.page_num,
-                "excerpt": c.excerpt,
-                "score": c.score,
+                "excerpt": getattr(c, "excerpt", getattr(c, "snippet", "")),
+                "score": getattr(c, "score", getattr(c, "relevance_score", 0.0)),
             }
             for c in result.citations
         ]
@@ -93,12 +102,13 @@ class RAGPipeline:
             role="user",
             content=question,
         )
-        await self._save_message(
+        token_dict = result.token_usage.model_dump() if hasattr(result.token_usage, "model_dump") else (result.token_usage or {})
+        assistant_msg = await self._save_message(
             conversation_id=str(conversation.id),
             role="assistant",
             content=result.answer,
             citations_json=citations_data,
-            token_usage_json=result.token_usage,
+            token_usage_json=token_dict,
         )
 
         # ── Step 9: Return response ────────────────────────────────────────
@@ -108,33 +118,38 @@ class RAGPipeline:
                 document_id=c.document_id,
                 filename=c.filename,
                 page_num=c.page_num,
-                excerpt=c.excerpt,
-                score=c.score,
+                snippet=getattr(c, "excerpt", getattr(c, "snippet", "")),
+                excerpt=getattr(c, "excerpt", getattr(c, "snippet", "")),
+                relevance_score=getattr(c, "score", getattr(c, "relevance_score", 0.0)),
             )
             for c in result.citations
         ]
 
+        from datetime import datetime, timezone
+        msg_created_at = getattr(assistant_msg, "created_at", None) or datetime.now(timezone.utc)
+
         return ChatResponse(
-            conversation_id=str(conversation.id),
+            conversation_id=conversation.id,
+            message_id=assistant_msg.id,
             answer=result.answer,
             citations=citation_schemas,
-            has_evidence=result.has_evidence,
-            token_usage=result.token_usage,
-            model_name=result.model_name,
+            token_usage=result.token_usage if hasattr(result.token_usage, "model_dump") else TokenUsage(**(token_dict or {})),
+            created_at=msg_created_at,
         )
 
     async def _get_or_create_conversation(
         self,
-        conversation_id: Optional[str],
+        conversation_id: Optional[Any],
         owner: User,
         question: str,
-        document_id: Optional[str],
-        collection_id: Optional[str],
+        document_id: Optional[Any],
+        collection_id: Optional[Any],
     ) -> Conversation:
         if conversation_id:
+            conv_uuid = conversation_id if isinstance(conversation_id, UUID) else UUID(str(conversation_id))
             result = await self.db.execute(
                 select(Conversation).where(
-                    Conversation.id == UUID(conversation_id),
+                    Conversation.id == conv_uuid,
                     Conversation.owner_id == owner.id,
                 )
             )
@@ -166,10 +181,11 @@ class RAGPipeline:
         await self.db.flush()
         return conv
 
-    async def _verify_document_ownership(self, document_id: str, owner: User) -> None:
+    async def _verify_document_ownership(self, document_id: Any, owner: User) -> None:
+        doc_uuid = document_id if isinstance(document_id, UUID) else UUID(str(document_id))
         result = await self.db.execute(
             select(Document).where(
-                Document.id == UUID(document_id),
+                Document.id == doc_uuid,
                 Document.owner_id == owner.id,
             )
         )
@@ -179,11 +195,12 @@ class RAGPipeline:
                 detail="Document not found or access denied.",
             )
 
-    async def _verify_collection_ownership(self, collection_id: str, owner: User) -> None:
+    async def _verify_collection_ownership(self, collection_id: Any, owner: User) -> None:
         from app.models.models import Collection
+        col_uuid = collection_id if isinstance(collection_id, UUID) else UUID(str(collection_id))
         result = await self.db.execute(
             select(Collection).where(
-                Collection.id == UUID(collection_id),
+                Collection.id == col_uuid,
                 Collection.owner_id == owner.id,
             )
         )
@@ -193,10 +210,11 @@ class RAGPipeline:
                 detail="Collection not found or access denied.",
             )
 
-    async def _get_recent_messages(self, conversation_id: str, limit: int = 6) -> list:
+    async def _get_recent_messages(self, conversation_id: Any, limit: int = 6) -> list:
+        conv_uuid = conversation_id if isinstance(conversation_id, UUID) else UUID(str(conversation_id))
         result = await self.db.execute(
             select(Message)
-            .where(Message.conversation_id == UUID(conversation_id))
+            .where(Message.conversation_id == conv_uuid)
             .order_by(Message.created_at.desc())
             .limit(limit)
         )
@@ -208,14 +226,15 @@ class RAGPipeline:
 
     async def _save_message(
         self,
-        conversation_id: str,
+        conversation_id: Any,
         role: str,
         content: str,
         citations_json: Optional[list] = None,
         token_usage_json: Optional[dict] = None,
     ) -> Message:
+        conv_uuid = conversation_id if isinstance(conversation_id, UUID) else UUID(str(conversation_id))
         msg = Message(
-            conversation_id=UUID(conversation_id),
+            conversation_id=conv_uuid,
             role=role,
             content=content,
             citations_json=citations_json,
@@ -224,3 +243,6 @@ class RAGPipeline:
         self.db.add(msg)
         await self.db.flush()
         return msg
+
+
+rag_pipeline = RAGPipeline()
