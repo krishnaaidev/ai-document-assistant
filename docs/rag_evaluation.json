@@ -1,0 +1,51 @@
+{
+  "description": "Golden evaluation dataset for AI Document Assistant RAG pipeline verification",
+  "version": "1.0.0",
+  "samples": [
+    {
+      "id": "eval-001",
+      "document_filename": "climate_policy_2025.pdf",
+      "question": "What is the targeted carbon emissions reduction by 2035 in the treaty?",
+      "ground_truth_answer": "The treaty targets a 45% reduction in net carbon emissions by 2035 compared to 2010 baseline levels.",
+      "relevant_chunk_ids": ["doc1_chunk_4", "doc1_chunk_5"],
+      "expected_pages": [7, 8],
+      "query_type": "factual_lookup"
+    },
+    {
+      "id": "eval-002",
+      "document_filename": "saas_security_compliance.docx",
+      "question": "What encryption standard is required for data at rest and data in transit?",
+      "ground_truth_answer": "Data at rest must be encrypted using AES-256-GCM, and data in transit must enforce TLS 1.3.",
+      "relevant_chunk_ids": ["doc2_chunk_12"],
+      "expected_pages": [4],
+      "query_type": "factual_lookup"
+    },
+    {
+      "id": "eval-003",
+      "document_filename": "annual_financial_report.pdf",
+      "question": "What was the year-over-year revenue growth for the enterprise cloud division?",
+      "ground_truth_answer": "The enterprise cloud division experienced a 34.2% year-over-year revenue growth reaching $1.2B.",
+      "relevant_chunk_ids": ["doc3_chunk_2"],
+      "expected_pages": [2],
+      "query_type": "metric_extraction"
+    },
+    {
+      "id": "eval-004",
+      "document_filename": "clinical_trial_summary.txt",
+      "question": "What were the primary inclusion criteria for Phase II patients?",
+      "ground_truth_answer": "Patients aged 18 to 65 with confirmed biomarker positive status and no prior immunotherapy within 6 months.",
+      "relevant_chunk_ids": ["doc4_chunk_1", "doc4_chunk_2"],
+      "expected_pages": [1],
+      "query_type": "criteria_extraction"
+    },
+    {
+      "id": "eval-005",
+      "document_filename": "unrelated_document.pdf",
+      "question": "What is the recipe for chocolate chip cookies with sea salt?",
+      "ground_truth_answer": null,
+      "relevant_chunk_ids": [],
+      "expected_pages": [],
+      "query_type": "out_of_domain_negative_refusal"
+    }
+  ]
+}
