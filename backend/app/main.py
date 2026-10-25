@@ -59,11 +59,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Pinecone init warning: %s", e)
 
-    # Warm up embedding model in background / startup
-    try:
-        embedding_service._get_model()
-    except Exception as e:
-        logger.warning("Embedding model preload warning: %s", e)
+    # Embedding model is lazy-loaded on demand to preserve memory on 512MB dynos
 
     # Verify or initialize database tables
     try:
