@@ -55,7 +55,7 @@ class GeminiProvider(BaseLLMProvider):
 
         try:
             import google.generativeai as genai
-            genai.configure(api_key=self.api_key)
+            genai.configure(api_key=self.api_key, transport="rest")
             self._model = genai.GenerativeModel(self.model_name)
             logger.info("Google Gemini model '%s' initialized successfully", self.model_name)
         except Exception as e:
