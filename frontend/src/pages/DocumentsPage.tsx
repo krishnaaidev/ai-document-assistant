@@ -105,8 +105,8 @@ export const DocumentsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-charcoal-900">My Documents</h1>
-          <p className="text-sm text-charcoal-500">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">My Documents</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Manage your parsed documents, vector embeddings, and ingestion statuses.
           </p>
         </div>
@@ -120,7 +120,7 @@ export const DocumentsPage: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-subtle space-y-3">
+      <div className="bg-white/90 dark:bg-[#111827]/90 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3 backdrop-blur-sm">
         <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1">
             <SearchBar
@@ -141,7 +141,7 @@ export const DocumentsPage: React.FC = () => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="text-xs bg-white border border-neutral-200 rounded-lg px-3 py-2 text-charcoal-700 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60"
             >
               <option value="all">All Statuses</option>
               <option value="completed">Completed</option>
@@ -157,7 +157,7 @@ export const DocumentsPage: React.FC = () => {
                 setTypeFilter(e.target.value);
                 setPage(1);
               }}
-              className="text-xs bg-white border border-neutral-200 rounded-lg px-3 py-2 text-charcoal-700 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60"
             >
               <option value="all">All File Types</option>
               <option value="pdf">PDF</option>
@@ -172,7 +172,7 @@ export const DocumentsPage: React.FC = () => {
                 setCollectionFilter(e.target.value);
                 setPage(1);
               }}
-              className="text-xs bg-white border border-neutral-200 rounded-lg px-3 py-2 text-charcoal-700 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60"
             >
               <option value="all">All Collections</option>
               {collections.map((col) => (
@@ -216,10 +216,10 @@ export const DocumentsPage: React.FC = () => {
           }}
         />
       ) : (
-        <div className="bg-white rounded-xl border border-neutral-200 shadow-subtle overflow-hidden">
+        <div className="bg-white/90 dark:bg-[#111827]/90 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden backdrop-blur-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-neutral-50/75 border-b border-neutral-200 text-xs font-semibold text-charcoal-500 uppercase tracking-wider">
+              <thead className="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200/80 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <tr>
                   <th scope="col" className="px-6 py-3.5">Document</th>
                   <th scope="col" className="px-6 py-3.5">Format</th>
@@ -229,30 +229,30 @@ export const DocumentsPage: React.FC = () => {
                   <th scope="col" className="px-6 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {documents.map((doc) => (
                   <tr
                     key={doc.id}
                     onClick={() => navigate(`/documents/${doc.id}`)}
-                    className="hover:bg-neutral-50/70 transition-colors cursor-pointer group"
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                   >
-                    <td className="px-6 py-4 font-medium text-charcoal-900 max-w-sm truncate">
+                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white max-w-sm truncate">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 group-hover:bg-primary-100 transition-colors">
-                          <FileText className="w-5 h-5" />
+                        <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                          <FileText className="w-4.5 h-4.5" />
                         </div>
                         <div className="truncate">
-                          <p className="font-semibold text-charcoal-900 truncate group-hover:text-primary-600 transition-colors">
+                          <p className="font-semibold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                             {doc.title || doc.filename}
                           </p>
-                          <p className="text-xs text-charcoal-400 truncate">{doc.filename}</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{doc.filename}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-xs font-semibold uppercase text-charcoal-500">
+                    <td className="px-6 py-4 text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
                       {doc.fileType}
                     </td>
-                    <td className="px-6 py-4 text-xs text-charcoal-500">
+                    <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">
                       {formatFileSize(doc.fileSize)}
                     </td>
                     <td className="px-6 py-4">

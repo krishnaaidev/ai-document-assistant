@@ -77,8 +77,8 @@ export const SummariesPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-charcoal-900">Document Summaries</h1>
-          <p className="text-sm text-charcoal-500">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Document Summaries</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Automated executive briefs, bullet points, and key takeaways generated from your knowledge base.
           </p>
         </div>
@@ -97,17 +97,17 @@ export const SummariesPage: React.FC = () => {
       </div>
 
       {/* Filter Row */}
-      <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-subtle flex flex-wrap gap-3 items-center">
+      <div className="bg-white/90 dark:bg-[#111827]/90 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-wrap gap-3 items-center backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-charcoal-400" />
-          <span className="text-xs font-semibold uppercase text-charcoal-500">Filter by:</span>
+          <Filter className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+          <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Filter by:</span>
         </div>
 
         {/* Filter Document */}
         <select
           value={selectedDocFilter}
           onChange={(e) => setSelectedDocFilter(e.target.value)}
-          className="text-xs bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-1.5 text-charcoal-800 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          className="text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60"
         >
           <option value="all">All Documents</option>
           {documents.map((d) => (
@@ -121,7 +121,7 @@ export const SummariesPage: React.FC = () => {
         <select
           value={selectedTypeFilter}
           onChange={(e) => setSelectedTypeFilter(e.target.value)}
-          className="text-xs bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-1.5 text-charcoal-800 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          className="text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60"
         >
           <option value="all">All Summary Types</option>
           {SUMMARY_TYPE_OPTIONS.map((opt) => (
@@ -162,7 +162,7 @@ export const SummariesPage: React.FC = () => {
           {filteredSummaries.map((summary) => (
             <div
               key={summary.id}
-              className="bg-white rounded-xl border border-neutral-200 p-5 shadow-subtle hover:border-primary-300 hover:shadow-card transition-all flex flex-col justify-between"
+              className="bg-white/90 dark:bg-[#111827]/90 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:border-indigo-300 dark:hover:border-indigo-700/60 hover:shadow-md transition-all flex flex-col justify-between backdrop-blur-sm"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -181,7 +181,7 @@ export const SummariesPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setDeleteTargetId(summary.id)}
-                      className="p-1.5 text-charcoal-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
                       title="Delete Summary"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -190,21 +190,21 @@ export const SummariesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-charcoal-900 text-sm truncate">
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-sm truncate">
                     {summary.documentTitle || summary.documentFilename}
                   </h3>
-                  <p className="text-xs text-charcoal-400 mt-0.5">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                     {formatDate(summary.createdAt)}
                   </p>
                 </div>
 
-                <p className="text-xs text-charcoal-600 line-clamp-4 leading-relaxed bg-neutral-50/60 p-2.5 rounded-lg border border-neutral-100">
+                <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-4 leading-relaxed bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                   {summary.content.replace(/^#+ /, '')}
                 </p>
               </div>
 
-              <div className="pt-3 mt-3 border-t border-neutral-100 flex items-center justify-between">
-                <span className="text-[11px] text-charcoal-400">
+              <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500">
                   {summary.keyPoints?.length || 0} key points
                 </span>
                 <Button

@@ -123,8 +123,8 @@ export const CollectionsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-charcoal-900">Collections</h1>
-          <p className="text-sm text-charcoal-500">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Collections</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Group related documents together for targeted RAG retrieval and multi-document chat.
           </p>
         </div>
@@ -161,11 +161,11 @@ export const CollectionsPage: React.FC = () => {
             <div
               key={col.id}
               onClick={() => setActiveCollection(col)}
-              className="bg-white rounded-xl border border-neutral-200 p-5 shadow-subtle hover:border-primary-300 hover:shadow-card transition-all cursor-pointer flex flex-col justify-between group"
+              className="bg-white/90 dark:bg-[#111827]/90 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:border-indigo-300 dark:hover:border-indigo-700/60 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group backdrop-blur-sm"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-teal-50 text-secondary-600 flex items-center justify-center ring-1 ring-teal-100 group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
                     <Folder className="w-5 h-5" />
                   </div>
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -183,7 +183,7 @@ export const CollectionsPage: React.FC = () => {
                         e.stopPropagation();
                         setDeleteConfirmCol(col);
                       }}
-                      className="p-1.5 text-charcoal-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
                       title="Delete Collection"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -192,23 +192,23 @@ export const CollectionsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-charcoal-900 group-hover:text-primary-600 transition-colors">
+                  <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     {col.name}
                   </h3>
-                  <p className="text-xs text-charcoal-500 mt-1 line-clamp-2 min-h-[32px]">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 min-h-[32px]">
                     {col.description || 'No description provided.'}
                   </p>
                 </div>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-neutral-100 flex items-center justify-between text-xs text-charcoal-500">
-                <span className="font-medium text-charcoal-700">
+              <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span className="font-medium text-slate-700 dark:text-slate-300">
                   {col.documentCount || col.documentIds?.length || 0} documents
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  leftIcon={<MessageSquare className="w-3.5 h-3.5 text-primary-600" />}
+                  leftIcon={<MessageSquare className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate('/chat', {

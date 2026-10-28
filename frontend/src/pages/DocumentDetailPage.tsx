@@ -173,7 +173,7 @@ export const DocumentDetailPage: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate('/documents')}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-charcoal-500 hover:text-charcoal-800 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to all documents
@@ -181,18 +181,18 @@ export const DocumentDetailPage: React.FC = () => {
       </div>
 
       {/* Document Header Card */}
-      <div className="bg-white rounded-xl border border-neutral-200 shadow-subtle p-6 space-y-4">
+      <div className="bg-white/90 dark:bg-[#111827]/90 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs p-6 space-y-4 backdrop-blur-sm">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 ring-1 ring-primary-100">
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 flex items-center justify-center shrink-0">
               <FileText className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-xl font-bold text-charcoal-900">{document.title}</h1>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">{document.title}</h1>
                 <Badge status={document.status} />
               </div>
-              <p className="text-xs text-charcoal-400 mt-1">{document.filename}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{document.filename}</p>
             </div>
           </div>
 
@@ -240,35 +240,35 @@ export const DocumentDetailPage: React.FC = () => {
         </div>
 
         {/* Metadata Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-neutral-100 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-xs">
           <div>
-            <span className="text-charcoal-400 block mb-0.5">File Size</span>
-            <span className="font-semibold text-charcoal-800">{formatFileSize(document.fileSize)}</span>
+            <span className="text-slate-400 dark:text-slate-500 block mb-0.5">File Size</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{formatFileSize(document.fileSize)}</span>
           </div>
           <div>
-            <span className="text-charcoal-400 block mb-0.5">Total Pages</span>
-            <span className="font-semibold text-charcoal-800">{document.pageCount ?? 1} pages</span>
+            <span className="text-slate-400 dark:text-slate-500 block mb-0.5">Total Pages</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{document.pageCount ?? 1} pages</span>
           </div>
           <div>
-            <span className="text-charcoal-400 block mb-0.5">Vector Chunks</span>
-            <span className="font-semibold text-charcoal-800">{document.chunkCount ?? 0} indexed</span>
+            <span className="text-slate-400 dark:text-slate-500 block mb-0.5">Vector Chunks</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{document.chunkCount ?? 0} indexed</span>
           </div>
           <div>
-            <span className="text-charcoal-400 block mb-0.5">Uploaded</span>
-            <span className="font-semibold text-charcoal-800">{formatDate(document.createdAt)}</span>
+            <span className="text-slate-400 dark:text-slate-500 block mb-0.5">Uploaded</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{formatDate(document.createdAt)}</span>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-neutral-200 flex gap-6 text-sm">
+      <div className="border-b border-slate-200 dark:border-slate-800 flex gap-6 text-sm">
         <button
           type="button"
           onClick={() => setActiveTab('overview')}
-          className={`pb-3 font-medium transition-colors border-b-2 -mb-px ${
+          className={`pb-3 font-medium transition-colors border-b-2 -mb-px cursor-pointer ${
             activeTab === 'overview'
-              ? 'border-primary-600 text-primary-600 font-semibold'
-              : 'border-transparent text-charcoal-500 hover:text-charcoal-800'
+              ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 font-semibold'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
           }`}
         >
           Overview & Insights
@@ -276,21 +276,21 @@ export const DocumentDetailPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab('text')}
-          className={`pb-3 font-medium transition-colors border-b-2 -mb-px ${
+          className={`pb-3 font-medium transition-colors border-b-2 -mb-px cursor-pointer ${
             activeTab === 'text'
-              ? 'border-primary-600 text-primary-600 font-semibold'
-              : 'border-transparent text-charcoal-500 hover:text-charcoal-800'
+              ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 font-semibold'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
           }`}
         >
-          Extracted Text
+          Extracted Content
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('summaries')}
-          className={`pb-3 font-medium transition-colors border-b-2 -mb-px ${
+          className={`pb-3 font-medium transition-colors border-b-2 -mb-px cursor-pointer ${
             activeTab === 'summaries'
-              ? 'border-primary-600 text-primary-600 font-semibold'
-              : 'border-transparent text-charcoal-500 hover:text-charcoal-800'
+              ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 font-semibold'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
           }`}
         >
           Summaries ({summaries.length})
@@ -301,23 +301,23 @@ export const DocumentDetailPage: React.FC = () => {
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-subtle space-y-3">
-              <h3 className="font-semibold text-charcoal-900 text-sm">Document Overview</h3>
-              <p className="text-sm text-charcoal-600 leading-relaxed">
+            <div className="bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-3">
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Document Overview</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                 This document has been parsed and segmented into semantic vector chunks for RAG question-answering. You can initiate natural language queries against its contents or create automated summaries across varying levels of detail.
               </p>
               {document.errorMessage && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-start gap-2">
+                <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-lg text-xs text-red-700 dark:text-red-400 flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>Processing Error: {document.errorMessage}</span>
                 </div>
               )}
             </div>
 
-            <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-subtle space-y-3">
+            <div className="bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-charcoal-900 text-sm">Suggested Questions</h3>
-                <Sparkles className="w-4 h-4 text-primary-600" />
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Suggested Questions</h3>
+                <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div className="space-y-2">
                 {[
@@ -336,10 +336,10 @@ export const DocumentDetailPage: React.FC = () => {
                         },
                       })
                     }
-                    className="w-full text-left p-3 rounded-lg border border-neutral-200 bg-neutral-50/50 hover:bg-neutral-50 hover:border-primary-300 transition-colors text-xs text-charcoal-700 font-medium flex items-center justify-between group"
+                    className="w-full text-left p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors text-xs text-slate-700 dark:text-slate-300 font-medium flex items-center justify-between group cursor-pointer"
                   >
                     <span>{q}</span>
-                    <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-charcoal-400 group-hover:text-primary-600 transition-colors" />
+                    <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
                   </button>
                 ))}
               </div>
@@ -347,24 +347,24 @@ export const DocumentDetailPage: React.FC = () => {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-subtle space-y-4">
-              <h3 className="font-semibold text-charcoal-900 text-sm">Quick Ingestion Stats</h3>
+            <div className="bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Quick Ingestion Stats</h3>
               <div className="space-y-3 text-xs">
-                <div className="flex justify-between py-1.5 border-b border-neutral-100">
-                  <span className="text-charcoal-400">Embedding Model</span>
-                  <span className="font-semibold text-charcoal-700">text-embedding-3</span>
+                <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 dark:text-slate-500">Embedding Model</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">text-embedding-3</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-neutral-100">
-                  <span className="text-charcoal-400">Chunk Strategy</span>
-                  <span className="font-semibold text-charcoal-700">512 tokens / 64 overlap</span>
+                <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 dark:text-slate-500">Chunk Strategy</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">512 tokens / 64 overlap</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-neutral-100">
-                  <span className="text-charcoal-400">Vector Storage</span>
-                  <span className="font-semibold text-charcoal-700">ChromaDB / Pinecone</span>
+                <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 dark:text-slate-500">Vector Storage</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">Pinecone DB</span>
                 </div>
                 <div className="flex justify-between py-1.5">
-                  <span className="text-charcoal-400">Last Synced</span>
-                  <span className="font-semibold text-charcoal-700">{formatRelativeDate(document.updatedAt)}</span>
+                  <span className="text-slate-400 dark:text-slate-500">Last Synced</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{formatRelativeDate(document.updatedAt)}</span>
                 </div>
               </div>
             </div>
@@ -373,7 +373,7 @@ export const DocumentDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'text' && (
-        <div className="bg-white rounded-xl border border-neutral-200 shadow-subtle p-6 space-y-4">
+        <div className="bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-72">
               <input
@@ -381,15 +381,15 @@ export const DocumentDetailPage: React.FC = () => {
                 placeholder="Search extracted text..."
                 value={textSearch}
                 onChange={(e) => setTextSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0D131F] text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               />
-              <Search className="w-3.5 h-3.5 text-charcoal-400 absolute left-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
             </div>
 
             <Button
               variant="outline"
               size="sm"
-              leftIcon={copiedText ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              leftIcon={copiedText ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
               onClick={() => copyToClipboard(extractedText)}
             >
               {copiedText ? 'Copied' : 'Copy All Text'}
@@ -399,7 +399,7 @@ export const DocumentDetailPage: React.FC = () => {
           {loadingText ? (
             <SkeletonText lines={10} />
           ) : (
-            <div className="p-4 rounded-lg bg-neutral-50/70 border border-neutral-200 font-mono text-xs text-charcoal-700 max-h-[500px] overflow-y-auto whitespace-pre-wrap leading-relaxed">
+            <div className="p-4 rounded-lg bg-slate-50/70 dark:bg-[#090D16] border border-slate-200 dark:border-slate-800 font-mono text-xs text-slate-700 dark:text-slate-300 max-h-[500px] overflow-y-auto whitespace-pre-wrap leading-relaxed">
               {filteredText || 'No text extracted for this document.'}
             </div>
           )}
@@ -409,7 +409,7 @@ export const DocumentDetailPage: React.FC = () => {
       {activeTab === 'summaries' && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <p className="text-xs text-charcoal-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Generated summaries for this document across multiple formats
             </p>
             <Button
@@ -438,14 +438,14 @@ export const DocumentDetailPage: React.FC = () => {
               {summaries.map((s) => (
                 <div
                   key={s.id}
-                  className="bg-white rounded-xl border border-neutral-200 p-6 shadow-subtle space-y-4"
+                  className="bg-white dark:bg-[#111827] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Badge variant="indigo" size="sm">
                         {s.summaryType}
                       </Badge>
-                      <span className="text-xs text-charcoal-400">
+                      <span className="text-xs text-slate-400 dark:text-slate-500">
                         {formatDate(s.createdAt)}
                       </span>
                     </div>
@@ -454,18 +454,18 @@ export const DocumentDetailPage: React.FC = () => {
                       size="sm"
                       onClick={() => deleteSummary(s.id)}
                     >
-                      <Trash2 className="w-3.5 h-3.5 text-charcoal-400 hover:text-red-600" />
+                      <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-500" />
                     </Button>
                   </div>
 
-                  <div className="prose prose-sm text-charcoal-800 text-xs leading-relaxed whitespace-pre-wrap">
+                  <div className="prose prose-sm text-slate-800 dark:text-slate-200 text-xs leading-relaxed whitespace-pre-wrap">
                     {s.content}
                   </div>
 
                   {s.keyPoints && s.keyPoints.length > 0 && (
-                    <div className="pt-3 border-t border-neutral-100">
-                      <p className="text-xs font-semibold text-charcoal-800 mb-2">Key Takeaways:</p>
-                      <ul className="list-disc pl-5 space-y-1 text-xs text-charcoal-600">
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-2">Key Takeaways:</p>
+                      <ul className="list-disc pl-5 space-y-1 text-xs text-slate-600 dark:text-slate-400">
                         {s.keyPoints.map((point, i) => (
                           <li key={i}>{point}</li>
                         ))}
@@ -502,7 +502,7 @@ export const DocumentDetailPage: React.FC = () => {
         }
       >
         <div className="space-y-4">
-          <p className="text-xs text-charcoal-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Choose the format and structure for your AI-generated synthesis:
           </p>
           <div className="grid grid-cols-1 gap-2.5">
@@ -512,8 +512,8 @@ export const DocumentDetailPage: React.FC = () => {
                 onClick={() => setSelectedSummaryType(opt.value as SummaryType)}
                 className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                   selectedSummaryType === opt.value
-                    ? 'border-primary-500 bg-primary-50/50'
-                    : 'border-neutral-200 hover:bg-neutral-50'
+                    ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/40 dark:border-indigo-500'
+                    : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                 }`}
               >
                 <input
@@ -522,11 +522,11 @@ export const DocumentDetailPage: React.FC = () => {
                   value={opt.value}
                   checked={selectedSummaryType === opt.value}
                   onChange={() => setSelectedSummaryType(opt.value as SummaryType)}
-                  className="mt-1 text-primary-600 focus:ring-primary-500"
+                  className="mt-1 text-indigo-600 focus:ring-indigo-500"
                 />
                 <div>
-                  <p className="text-xs font-semibold text-charcoal-900">{opt.label}</p>
-                  <p className="text-[11px] text-charcoal-500">{opt.description}</p>
+                  <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">{opt.label}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{opt.description}</p>
                 </div>
               </label>
             ))}

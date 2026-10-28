@@ -56,7 +56,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-charcoal-900/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-950/60 dark:bg-black/75 backdrop-blur-sm transition-opacity"
         onClick={() => {
           if (closeOnBackdropClick) onClose();
         }}
@@ -65,17 +65,17 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Modal Card */}
       <div
         className={clsx(
-          'relative w-full rounded-xl bg-white shadow-elevation border border-neutral-200 transition-all z-10 my-8 overflow-hidden flex flex-col max-h-[90vh]',
+          'relative w-full rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200/90 dark:border-slate-800 transition-all z-10 my-8 overflow-hidden flex flex-col max-h-[90vh]',
           sizeClasses[size]
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-4">
-          <div className="font-semibold text-charcoal-900 text-base">{title}</div>
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 px-6 py-4">
+          <div className="font-semibold text-slate-900 dark:text-slate-100 text-base">{title}</div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1 text-charcoal-400 hover:bg-neutral-100 hover:text-charcoal-700 transition-colors"
+            className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -83,11 +83,11 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4 overflow-y-auto flex-1">{children}</div>
+        <div className="px-6 py-4 overflow-y-auto flex-1 text-slate-700 dark:text-slate-300">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="border-t border-neutral-100 bg-neutral-50/50 px-6 py-3.5 flex justify-end items-center gap-3">
+          <div className="border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/70 px-6 py-3.5 flex justify-end items-center gap-3">
             {footer}
           </div>
         )}
@@ -95,3 +95,5 @@ export const Modal: React.FC<ModalProps> = ({
     </div>
   );
 };
+
+export default Modal;

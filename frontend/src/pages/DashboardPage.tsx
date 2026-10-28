@@ -100,8 +100,8 @@ export const DashboardPage: React.FC = () => {
       {/* Page Heading & Quick Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-charcoal-900">Workspace Dashboard</h1>
-          <p className="text-sm text-charcoal-500">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Workspace Dashboard</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Welcome back! Here is an overview of your indexed knowledge base and AI sessions.
           </p>
         </div>
@@ -129,70 +129,70 @@ export const DashboardPage: React.FC = () => {
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
         ) : (
           <>
-            <div className="p-5 rounded-xl border border-neutral-200 bg-white shadow-subtle hover:border-primary-200 transition-colors">
+            <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700/60 transition-all duration-200 group">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-charcoal-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Total Documents
                 </span>
-                <div className="w-9 h-9 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
                   <FileText className="w-5 h-5" />
                 </div>
               </div>
-              <p className="mt-3 text-2xl font-bold text-charcoal-900">
+              <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {stats?.totalDocuments ?? 0}
               </p>
-              <div className="mt-2 flex items-center text-xs text-charcoal-500">
+              <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
                 <span>PDFs, DOCX, TXT files</span>
               </div>
             </div>
 
-            <div className="p-5 rounded-xl border border-neutral-200 bg-white shadow-subtle hover:border-secondary-200 transition-colors">
+            <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700/60 transition-all duration-200 group">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-charcoal-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Collections
                 </span>
-                <div className="w-9 h-9 rounded-lg bg-teal-50 text-secondary-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
                   <Folder className="w-5 h-5" />
                 </div>
               </div>
-              <p className="mt-3 text-2xl font-bold text-charcoal-900">
+              <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {stats?.totalCollections ?? 0}
               </p>
-              <div className="mt-2 flex items-center text-xs text-charcoal-500">
+              <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
                 <span>Organized workspaces</span>
               </div>
             </div>
 
-            <div className="p-5 rounded-xl border border-neutral-200 bg-white shadow-subtle hover:border-indigo-200 transition-colors">
+            <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700/60 transition-all duration-200 group">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-charcoal-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Conversations
                 </span>
-                <div className="w-9 h-9 rounded-lg bg-indigo-50 text-primary-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
                   <MessageSquare className="w-5 h-5" />
                 </div>
               </div>
-              <p className="mt-3 text-2xl font-bold text-charcoal-900">
+              <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {stats?.totalConversations ?? 0}
               </p>
-              <div className="mt-2 flex items-center text-xs text-charcoal-500">
+              <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
                 <span>RAG inquiry sessions</span>
               </div>
             </div>
 
-            <div className="p-5 rounded-xl border border-neutral-200 bg-white shadow-subtle hover:border-primary-200 transition-colors">
+            <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700/60 transition-all duration-200 group">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-charcoal-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Summaries
                 </span>
-                <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
                   <FileCheck className="w-5 h-5" />
                 </div>
               </div>
-              <p className="mt-3 text-2xl font-bold text-charcoal-900">
+              <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {stats?.totalSummaries ?? 0}
               </p>
-              <div className="mt-2 flex items-center text-xs text-charcoal-500">
+              <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
                 <span>Executive & bullet syntheses</span>
               </div>
             </div>
@@ -204,8 +204,8 @@ export const DashboardPage: React.FC = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-charcoal-900">Recent Documents</h2>
-            <span className="text-xs text-charcoal-400">Last 5 updated</span>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Recent Documents</h2>
+            <span className="text-xs text-slate-400 dark:text-slate-500">Last 5 updated</span>
           </div>
           <Button
             variant="ghost"
@@ -231,10 +231,10 @@ export const DashboardPage: React.FC = () => {
             }}
           />
         ) : (
-          <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-subtle">
+          <div className="overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-neutral-50/75 border-b border-neutral-200 text-xs font-medium text-charcoal-500 uppercase tracking-wider">
+                <thead className="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200/80 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <tr>
                     <th scope="col" className="px-6 py-3.5">Filename</th>
                     <th scope="col" className="px-6 py-3.5">Type</th>
@@ -244,31 +244,31 @@ export const DashboardPage: React.FC = () => {
                     <th scope="col" className="px-6 py-3.5 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {recentDocs.map((doc) => (
                     <tr
                       key={doc.id}
-                      className="hover:bg-neutral-50/80 transition-colors cursor-pointer group"
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                       onClick={() => navigate(`/documents/${doc.id}`)}
                     >
-                      <td className="px-6 py-4 font-medium text-charcoal-900 truncate max-w-xs">
+                      <td className="px-6 py-4 font-medium text-slate-900 dark:text-white truncate max-w-xs">
                         <div className="flex items-center gap-2.5">
-                          <FileText className="w-4 h-4 text-primary-600 shrink-0" />
-                          <span className="group-hover:text-primary-600 transition-colors truncate">
+                          <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                          <span className="group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                             {doc.title || doc.filename}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-charcoal-500 uppercase text-xs font-semibold">
+                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400 uppercase text-xs font-semibold">
                         {doc.fileType}
                       </td>
-                      <td className="px-6 py-4 text-charcoal-500 text-xs">
+                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs">
                         {formatFileSize(doc.fileSize)}
                       </td>
                       <td className="px-6 py-4">
                         <Badge status={doc.status} />
                       </td>
-                      <td className="px-6 py-4 text-charcoal-400 text-xs">
+                      <td className="px-6 py-4 text-slate-400 dark:text-slate-500 text-xs">
                         {formatRelativeDate(doc.createdAt)}
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -295,11 +295,11 @@ export const DashboardPage: React.FC = () => {
       {/* Two Column Grid: Recent Conversations & Recent Summaries */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Conversations */}
-        <div className="p-6 rounded-xl border border-neutral-200 bg-white shadow-subtle space-y-4">
+        <div className="p-6 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-primary-600" />
-              <h3 className="font-semibold text-charcoal-900 text-base">Recent Conversations</h3>
+              <MessageSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              <h3 className="font-semibold text-slate-900 dark:text-white text-base">Recent Conversations</h3>
             </div>
             <Button
               variant="ghost"
@@ -314,33 +314,33 @@ export const DashboardPage: React.FC = () => {
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="h-16 rounded-lg bg-neutral-100 animate-pulse" />
+                <div key={n} className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
               ))}
             </div>
           ) : recentConversations.length === 0 ? (
-            <div className="py-8 text-center text-xs text-charcoal-400">
+            <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
               No conversations started yet. Launch an AI chat to explore your documents.
             </div>
           ) : (
-            <div className="divide-y divide-neutral-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {recentConversations.map((conv) => (
                 <div
                   key={conv.id}
                   onClick={() => navigate(`/chat/${conv.id}`)}
-                  className="py-3 px-2 rounded-lg hover:bg-neutral-50 cursor-pointer flex items-center justify-between transition-colors group"
+                  className="py-3 px-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer flex items-center justify-between transition-colors group"
                 >
                   <div className="space-y-1 truncate pr-3">
-                    <p className="text-sm font-medium text-charcoal-800 group-hover:text-primary-600 transition-colors truncate">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                       {conv.title}
                     </p>
-                    <div className="flex items-center gap-2 text-[11px] text-charcoal-400">
+                    <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
                       <Clock className="w-3 h-3" />
                       <span>{formatRelativeDate(conv.lastMessageAt || conv.createdAt)}</span>
                       <span>•</span>
                       <span>{conv.messageCount || 0} messages</span>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-charcoal-300 group-hover:text-primary-600 shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 shrink-0" />
                 </div>
               ))}
             </div>
@@ -348,11 +348,11 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Recent Summaries */}
-        <div className="p-6 rounded-xl border border-neutral-200 bg-white shadow-subtle space-y-4">
+        <div className="p-6 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileCheck className="w-4 h-4 text-secondary-600" />
-              <h3 className="font-semibold text-charcoal-900 text-base">Recent Summaries</h3>
+              <FileCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <h3 className="font-semibold text-slate-900 dark:text-white text-base">Recent Summaries</h3>
             </div>
             <Button
               variant="ghost"
@@ -367,30 +367,30 @@ export const DashboardPage: React.FC = () => {
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="h-16 rounded-lg bg-neutral-100 animate-pulse" />
+                <div key={n} className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
               ))}
             </div>
           ) : recentSummaries.length === 0 ? (
-            <div className="py-8 text-center text-xs text-charcoal-400">
+            <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
               No summaries generated yet. Open a document to generate structured summaries.
             </div>
           ) : (
-            <div className="divide-y divide-neutral-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {recentSummaries.map((summary) => (
                 <div
                   key={summary.id}
                   onClick={() => navigate('/summaries')}
-                  className="py-3 px-2 rounded-lg hover:bg-neutral-50 cursor-pointer transition-colors group"
+                  className="py-3 px-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors group"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-charcoal-800 truncate">
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
                       {summary.documentTitle || summary.documentFilename}
                     </span>
                     <Badge variant="teal" size="sm">
                       {summary.summaryType}
                     </Badge>
                   </div>
-                  <p className="text-xs text-charcoal-500 line-clamp-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                     {summary.content.replace(/^#+ /, '')}
                   </p>
                 </div>

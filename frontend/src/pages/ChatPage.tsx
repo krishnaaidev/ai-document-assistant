@@ -166,10 +166,10 @@ export const ChatPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex rounded-2xl border border-neutral-200 bg-white shadow-subtle overflow-hidden">
+    <div className="h-[calc(100vh-8rem)] flex rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0D111D] shadow-xs overflow-hidden">
       {/* Left Panel: Conversations list */}
-      <div className="w-72 bg-neutral-50/70 border-r border-neutral-200 flex flex-col shrink-0">
-        <div className="p-4 border-b border-neutral-200/80">
+      <div className="w-72 bg-slate-50/80 dark:bg-[#0D111D]/90 border-r border-slate-200/80 dark:border-slate-800 flex flex-col shrink-0">
+        <div className="p-4 border-b border-slate-200/80 dark:border-slate-800">
           <Button
             variant="primary"
             className="w-full"
@@ -182,12 +182,12 @@ export const ChatPage: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-charcoal-400">
+          <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             Recent Chats
           </p>
 
           {conversations.length === 0 ? (
-            <div className="p-4 text-center text-xs text-charcoal-400">
+            <div className="p-4 text-center text-xs text-slate-400 dark:text-slate-500">
               No conversations yet. Start one with the button above!
             </div>
           ) : (
@@ -198,16 +198,16 @@ export const ChatPage: React.FC = () => {
                 <div
                   key={conv.id}
                   onClick={() => navigate(`/chat/${conv.id}`)}
-                  className={`group flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                  className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-colors ${
                     isSelected
-                      ? 'bg-white text-primary-700 shadow-xs border border-neutral-200 font-semibold'
-                      : 'text-charcoal-700 hover:bg-neutral-100'
+                      ? 'bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 shadow-xs border border-slate-200 dark:border-slate-700 font-semibold'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/50'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate pr-2">
                     <MessageSquare
                       className={`w-3.5 h-3.5 shrink-0 ${
-                        isSelected ? 'text-primary-600' : 'text-charcoal-400'
+                        isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'
                       }`}
                     />
                     <span className="truncate">{conv.title}</span>
@@ -224,7 +224,7 @@ export const ChatPage: React.FC = () => {
                         setNewTitle(conv.title);
                         setRenameModalOpen(true);
                       }}
-                      className="p-1 hover:text-charcoal-900 rounded"
+                      className="p-1 hover:text-slate-900 dark:hover:text-white rounded"
                       title="Rename"
                     >
                       <Edit2 className="w-3 h-3" />
@@ -232,7 +232,7 @@ export const ChatPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setDeleteTargetId(conv.id)}
-                      className="p-1 hover:text-red-600 rounded"
+                      className="p-1 hover:text-red-600 dark:hover:text-red-400 rounded"
                       title="Delete"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -246,11 +246,11 @@ export const ChatPage: React.FC = () => {
       </div>
 
       {/* Main Area: Chat thread & composer */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white">
+      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0D111D]">
         {/* Top Chat Subheader with Scope Selector */}
-        <div className="h-14 border-b border-neutral-100 px-6 flex items-center justify-between bg-white z-10 shrink-0">
+        <div className="h-14 border-b border-slate-100 dark:border-slate-800 px-6 flex items-center justify-between bg-white dark:bg-[#0D111D] z-10 shrink-0">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-charcoal-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Target Scope:
             </span>
 
@@ -265,7 +265,7 @@ export const ChatPage: React.FC = () => {
                     collectionId: newType === 'collection' ? collections[0]?.id : undefined,
                   });
                 }}
-                className="text-xs font-medium bg-neutral-50 border border-neutral-200 rounded-lg px-2.5 py-1.5 text-charcoal-800 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                className="text-xs font-medium bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60"
               >
                 <option value="all">All Documents</option>
                 <option value="document">Single Document</option>
@@ -278,7 +278,7 @@ export const ChatPage: React.FC = () => {
                   onChange={(e) =>
                     setScope({ ...scope, documentId: e.target.value })
                   }
-                  className="text-xs font-medium bg-neutral-50 border border-neutral-200 rounded-lg px-2.5 py-1.5 text-charcoal-800 focus:outline-none focus:ring-2 focus:ring-primary-100 max-w-[200px]"
+                  className="text-xs font-medium bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60 max-w-[200px]"
                 >
                   {documents.map((d) => (
                     <option key={d.id} value={d.id}>
@@ -294,7 +294,7 @@ export const ChatPage: React.FC = () => {
                   onChange={(e) =>
                     setScope({ ...scope, collectionId: e.target.value })
                   }
-                  className="text-xs font-medium bg-neutral-50 border border-neutral-200 rounded-lg px-2.5 py-1.5 text-charcoal-800 focus:outline-none focus:ring-2 focus:ring-primary-100 max-w-[200px]"
+                  className="text-xs font-medium bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60 max-w-[200px]"
                 >
                   {collections.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -311,21 +311,21 @@ export const ChatPage: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center max-w-xl mx-auto text-center space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center ring-8 ring-primary-50/50">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center ring-8 ring-indigo-50/50 dark:ring-indigo-950/30">
                 <Sparkles className="w-7 h-7" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-semibold text-charcoal-900">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                   Ask anything about your documents
                 </h3>
-                <p className="text-xs text-charcoal-500 max-w-sm">
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
                   The AI assistant retrieves relevant passages from indexed files, citing source documents with high precision.
                 </p>
               </div>
 
               {/* Suggested Questions */}
               <div className="w-full space-y-2 pt-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-charcoal-400">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   Try asking
                 </p>
                 <div className="grid grid-cols-1 gap-2">
@@ -334,7 +334,7 @@ export const ChatPage: React.FC = () => {
                       key={idx}
                       type="button"
                       onClick={() => sendMessage(q)}
-                      className="text-left p-3 rounded-xl border border-neutral-200 bg-neutral-50/50 hover:bg-neutral-50 hover:border-primary-300 transition-colors text-xs text-charcoal-700 font-medium"
+                      className="text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 hover:bg-slate-100/80 dark:hover:bg-slate-850 hover:border-indigo-300 dark:hover:border-indigo-700/60 transition-colors text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer"
                     >
                       &quot;{q}&quot;
                     </button>
@@ -355,10 +355,10 @@ export const ChatPage: React.FC = () => {
                 >
                   {/* Avatar */}
                   <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
                       isUser
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-teal-600 text-white shadow-subtle'
+                        ? 'bg-gradient-to-tr from-indigo-600 to-purple-600 text-white'
+                        : 'bg-gradient-to-tr from-emerald-600 to-teal-600 text-white'
                     }`}
                   >
                     {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
@@ -368,8 +368,8 @@ export const ChatPage: React.FC = () => {
                   <div
                     className={`rounded-2xl p-4 space-y-2 max-w-2xl text-sm leading-relaxed ${
                       isUser
-                        ? 'bg-primary-600 text-white shadow-subtle'
-                        : 'bg-neutral-50/80 border border-neutral-200 text-charcoal-900 shadow-subtle'
+                        ? 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 text-white shadow-xs'
+                        : 'bg-slate-50/90 dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-xs'
                     }`}
                   >
                     {isUser ? (
@@ -384,21 +384,21 @@ export const ChatPage: React.FC = () => {
 
                     {/* Citations & Actions for Assistant messages */}
                     {!isUser && (
-                      <div className="pt-2 border-t border-neutral-200/60 mt-3 space-y-2">
+                      <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800 mt-3 space-y-2">
                         {/* Copy button */}
-                        <div className="flex items-center justify-between text-xs text-charcoal-400">
+                        <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
                           <span className="font-semibold uppercase tracking-wider text-[10px]">
                             {msg.citations && msg.citations.length > 0 ? 'Referenced Sources' : 'Response'}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleCopyMessage(msg.id, msg.content)}
-                            className="inline-flex items-center gap-1 hover:text-charcoal-700 transition-colors"
+                            className="inline-flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300 transition-colors cursor-pointer"
                           >
                             {copiedMessageId === msg.id ? (
                               <>
-                                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                <span className="text-emerald-600">Copied</span>
+                                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
                               </>
                             ) : (
                               <>
@@ -417,18 +417,18 @@ export const ChatPage: React.FC = () => {
                                 key={cit.id}
                                 type="button"
                                 onClick={() =>
-                                  setExpandedCitationId(
-                                    expandedCitationId === cit.id ? null : cit.id
-                                  )
+                                   setExpandedCitationId(
+                                     expandedCitationId === cit.id ? null : cit.id
+                                   )
                                 }
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-neutral-200 text-xs text-charcoal-700 hover:border-primary-400 transition-colors"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors cursor-pointer"
                               >
-                                <Quote className="w-3 h-3 text-primary-600" />
+                                <Quote className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
                                 <span className="font-medium truncate max-w-[150px]">
                                   {cit.filename}
                                 </span>
                                 {cit.pageNumber && (
-                                  <span className="text-charcoal-400 text-[10px]">
+                                  <span className="text-slate-400 text-[10px]">
                                     p.{cit.pageNumber}
                                   </span>
                                 )}
@@ -440,7 +440,7 @@ export const ChatPage: React.FC = () => {
                         {/* Expanded Citation Preview */}
                         {expandedCitationId &&
                           msg.citations?.some((c) => c.id === expandedCitationId) && (
-                            <div className="mt-2 p-3 bg-white border border-primary-200 rounded-lg text-xs space-y-1 animate-fadeIn">
+                            <div className="mt-2 p-3 bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800/80 rounded-xl text-xs space-y-1.5 shadow-2xs">
                               {(() => {
                                 const activeCit = msg.citations.find(
                                   (c) => c.id === expandedCitationId
@@ -448,17 +448,17 @@ export const ChatPage: React.FC = () => {
                                 if (!activeCit) return null;
                                 return (
                                   <>
-                                    <div className="flex items-center justify-between text-charcoal-700 font-semibold">
+                                    <div className="flex items-center justify-between text-slate-800 dark:text-slate-200 font-semibold">
                                       <span>
                                         {activeCit.filename} (Page {activeCit.pageNumber || 1})
                                       </span>
                                       {activeCit.score && (
-                                        <span className="text-primary-600 text-[10px]">
+                                        <span className="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">
                                           Match: {Math.round(activeCit.score * 100)}%
                                         </span>
                                       )}
                                     </div>
-                                    <p className="text-charcoal-600 italic bg-neutral-50 p-2 rounded border border-neutral-100">
+                                    <p className="text-slate-600 dark:text-slate-300 italic bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
                                       &ldquo;{activeCit.excerpt}&rdquo;
                                     </p>
                                   </>
@@ -477,11 +477,11 @@ export const ChatPage: React.FC = () => {
           {/* Loading Indicator for Assistant Response */}
           {sendingMessage && (
             <div className="flex gap-3.5 max-w-3xl mr-auto">
-              <div className="w-8 h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="rounded-2xl p-4 bg-neutral-50 border border-neutral-200 text-sm flex items-center gap-2 text-charcoal-500">
-                <Loader2 className="w-4 h-4 animate-spin text-primary-600" />
+              <div className="rounded-2xl p-4 bg-slate-50 dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 text-sm flex items-center gap-2.5 text-slate-500 dark:text-slate-400 shadow-xs">
+                <Loader2 className="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" />
                 <span>Searching vector indices and synthesizing response...</span>
               </div>
             </div>
@@ -491,7 +491,7 @@ export const ChatPage: React.FC = () => {
         </div>
 
         {/* Input Composer */}
-        <div className="p-4 border-t border-neutral-200 bg-white">
+        <div className="p-4 border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#0D111D]">
           <form onSubmit={handleSendMessage} className="relative flex items-end gap-2">
             <textarea
               rows={2}
@@ -499,7 +499,7 @@ export const ChatPage: React.FC = () => {
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask a question about your documents... (Press Enter to send, Shift+Enter for newline)"
-              className="w-full resize-none rounded-xl border border-neutral-200 p-3 pr-12 text-sm text-charcoal placeholder-charcoal-400 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500 shadow-subtle"
+              className="w-full resize-none rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/80 p-3 pr-14 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60 focus:border-indigo-500 dark:focus:border-indigo-400 shadow-2xs"
             />
             <Button
               type="submit"
@@ -507,13 +507,13 @@ export const ChatPage: React.FC = () => {
               size="md"
               disabled={!inputMessage.trim() || sendingMessage}
               loading={sendingMessage}
-              className="absolute right-2 bottom-2 rounded-lg"
+              className="absolute right-2.5 bottom-2.5 rounded-lg"
               title="Send Message"
             >
               <Send className="w-4 h-4" />
             </Button>
           </form>
-          <p className="text-[11px] text-charcoal-400 mt-2 text-center">
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 text-center">
             DocAssistant retrieves verified context from your knowledge base to minimize hallucinations.
           </p>
         </div>
