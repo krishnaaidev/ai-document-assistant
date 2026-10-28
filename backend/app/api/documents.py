@@ -295,16 +295,10 @@ async def get_document_content(
     content_text = ""
     try:
         from app.storage.firebase_storage import get_file_bytes
+        from app.rag.document_processor import document_processor
         file_bytes = await get_file_bytes(doc.storage_path)
-        if doc.content_type == "text/plain":
-            content_text = file_bytes.decode("utf-8", errors="replace")
-        elif doc.content_type == "application/pdf":
-            from app.rag.document_processor import DocumentProcessor
-            processor = DocumentProcessor()
-            pages = processor.extract_text_from_pdf(file_bytes)
-            content_text = "\n\n".join(p[1] for p in pages)
-        else:
-            content_text = file_bytes.decode("utf-8", errors="replace")
+        pages = document_processor.extract_text(file_bytes, doc.content_type, doc.filename)
+        content_text = "\n\n".join(text for _, text in pages if text)
     except Exception as e:
         logger.warning(f"Could not load document text for {doc.id}: {e}")
 

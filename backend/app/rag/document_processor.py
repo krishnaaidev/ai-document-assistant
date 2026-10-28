@@ -18,6 +18,15 @@ class DocumentChunk:
     chunk_index: int
 
 
+@dataclass
+class ExtractionResult:
+    text: str
+    page_count: int
+    chunks: List[DocumentChunk]
+    file_hash: str
+    warnings: List[str]
+
+
 class DocumentProcessor:
     def __init__(self):
         self.settings = get_settings()
@@ -220,6 +229,33 @@ class DocumentProcessor:
                     start = start + step
 
         return chunks
+
+    async def process(
+        self,
+        file_bytes: bytes,
+        content_type: str,
+        filename: str,
+        document_id: str,
+    ) -> ExtractionResult:
+        import hashlib
+        warnings: List[str] = []
+        file_hash = hashlib.sha256(file_bytes).hexdigest()
+
+        pages_data = self.extract_text(file_bytes, content_type, filename)
+        page_count = max(1, len(pages_data))
+        combined_text = "\n\n".join(text for _, text in pages_data)
+        chunks = self.chunk_text(pages_data, document_id=str(document_id))
+
+        if len(combined_text.strip()) < 50:
+            warnings.append("Document text is very short or may contain unscanned images.")
+
+        return ExtractionResult(
+            text=combined_text,
+            page_count=page_count,
+            chunks=chunks,
+            file_hash=file_hash,
+            warnings=warnings,
+        )
 
     async def process_document(
         self,

@@ -158,21 +158,26 @@ class PineconeService:
                     query_kwargs["filter"] = filter_dict
 
                 response = index.query(**query_kwargs)
-                for match in response.get("matches", []):
+                matches = response.get("matches", [])
+                filtered_matches = [m for m in matches if float(m.get("score", 0.0)) >= threshold]
+                if not filtered_matches and matches:
+                    # If threshold was too strict but matches exist, take top matches >= 0.2
+                    filtered_matches = [m for m in matches if float(m.get("score", 0.0)) >= 0.2][:k]
+
+                for match in filtered_matches:
                     score = float(match.get("score", 0.0))
-                    if score >= threshold:
-                        meta = match.get("metadata", {})
-                        results.append(
-                            SearchResult(
-                                chunk_id=meta.get("chunk_id", match.get("id")),
-                                document_id=meta.get("document_id", ""),
-                                filename=meta.get("filename", ""),
-                                text=meta.get("text", ""),
-                                score=score,
-                                page_num=int(meta.get("page_num")) if meta.get("page_num") is not None else None,
-                                chunk_index=int(meta.get("chunk_index")) if meta.get("chunk_index") is not None else None,
-                            )
+                    meta = match.get("metadata", {})
+                    results.append(
+                        SearchResult(
+                            chunk_id=meta.get("chunk_id", match.get("id")),
+                            document_id=meta.get("document_id", ""),
+                            filename=meta.get("filename", ""),
+                            text=meta.get("text", ""),
+                            score=score,
+                            page_num=int(meta.get("page_num")) if meta.get("page_num") is not None else None,
+                            chunk_index=int(meta.get("chunk_index")) if meta.get("chunk_index") is not None else None,
                         )
+                    )
                 return results
             except Exception as e:
                 logger.error("Error querying Pinecone: %s. Using memory fallback.", e)
