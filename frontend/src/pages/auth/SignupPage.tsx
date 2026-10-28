@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Brain, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Footer } from '../../components/common/Footer';
 
 export default function SignupPage() {
   const [displayName, setDisplayName] = useState('');
@@ -56,8 +57,9 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] flex flex-col items-center justify-center px-4 py-8">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-[#FAFAF8] flex flex-col justify-between">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-2xl mb-4">
             <Brain className="w-6 h-6 text-white" />
@@ -162,7 +164,9 @@ export default function SignupPage() {
             Sign in
           </Link>
         </p>
+        </div>
       </div>
+      <Footer className="border-t-0 bg-transparent py-4" />
     </div>
   );
 }

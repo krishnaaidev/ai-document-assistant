@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
+import { Footer } from '../components/common/Footer';
 
 const navItems = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -212,8 +213,11 @@ export default function AppLayout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto flex flex-col justify-between">
+          <div className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl w-full mx-auto">
+            <Outlet />
+          </div>
+          <Footer />
         </main>
       </div>
     </div>

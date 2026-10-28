@@ -5,6 +5,7 @@ import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { Mail, ArrowLeft, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 import { validateEmail } from '@/utils/validators';
+import { Footer } from '@/components/common/Footer';
 
 export const ResetPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -35,7 +36,8 @@ export const ResetPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAFAF8] flex flex-col justify-between py-6 sm:px-6 lg:px-8">
+      <div className="flex-1 flex flex-col justify-center">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-600 text-white shadow-elevation mb-3">
           <FileText className="w-8 h-8" />
@@ -109,6 +111,8 @@ export const ResetPasswordPage: React.FC = () => {
           )}
         </div>
       </div>
+      </div>
+      <Footer className="border-t-0 bg-transparent py-4" />
     </div>
   );
 };
