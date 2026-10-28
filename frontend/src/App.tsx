@@ -25,7 +25,16 @@ import { HelpPage } from '@/pages/HelpPage';
 const RootRedirect: React.FC = () => {
   const { currentUser, userProfile, loading } = useAuth();
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-neutral-500 font-medium">Loading session...</p>
+        </div>
+      </div>
+    );
+  }
   if (currentUser || userProfile) {
     return <Navigate to="/dashboard" replace />;
   }
