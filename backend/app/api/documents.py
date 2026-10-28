@@ -50,12 +50,24 @@ async def upload_document(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     collection_id: Optional[str] = Form(default=None),
+    collectionId: Optional[str] = Form(default=None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Upload a document and trigger background processing."""
-    # ── Validate content type ──────────────────────────────────────────────
+    target_collection_id = collection_id or collectionId
+
+    # ── Validate content type (with extension fallback for browser quirks) ─
     content_type = file.content_type or ""
+    filename_lower = (file.filename or "").lower()
+    if not content_type or content_type in ("application/octet-stream", "application/zip", "binary/octet-stream"):
+        if filename_lower.endswith(".pdf"):
+            content_type = "application/pdf"
+        elif filename_lower.endswith(".docx"):
+            content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        elif filename_lower.endswith(".txt"):
+            content_type = "text/plain"
+
     if content_type not in ALLOWED_CONTENT_TYPES:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -107,7 +119,7 @@ async def upload_document(
         content_type=content_type,
         file_size=file_size,
         storage_path=storage_path,
-        collection_id=collection_id,
+        collection_id=target_collection_id,
     )
 
     # ── Trigger background processing ──────────────────────────────────────

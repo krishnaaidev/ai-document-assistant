@@ -20,7 +20,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
-        value: gemini-1.5-flash
+        value: gemini-3.5-flash
       - key: PINECONE_API_KEY
         sync: false
       - key: PINECONE_INDEX_NAME
@@ -38,7 +38,7 @@ services:
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
       - key: CORS_ORIGINS
-        value: "https://your-frontend.vercel.app"
+        value: "https://frontend-gray-theta-27.vercel.app,http://localhost:5173"
       - key: MAX_UPLOAD_SIZE_MB
         value: "20"
       - key: TOP_K
