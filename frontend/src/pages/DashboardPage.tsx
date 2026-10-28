@@ -13,10 +13,10 @@ import {
   Sparkles,
   AlertCircle,
   ExternalLink,
+  RotateCw,
 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
-import { SkeletonCard, SkeletonTable } from '@/components/common/Skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Modal } from '@/components/common/Modal';
 import { FileDropzone } from '@/components/common/FileDropzone';
@@ -26,12 +26,45 @@ import toast from 'react-hot-toast';
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentDocs, setRecentDocs] = useState<Document[]>([]);
-  const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
-  const [recentSummaries, setRecentSummaries] = useState<Summary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Instant optimistic workspace state (0ms latency, zero skeleton freeze)
+  const [stats, setStats] = useState<DashboardStats>(() => {
+    try {
+      const cached = sessionStorage.getItem('dashboard_stats_cache');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return {
+      totalDocuments: 0,
+      totalCollections: 0,
+      totalConversations: 0,
+      totalSummaries: 0,
+    };
+  });
+
+  const [recentDocs, setRecentDocs] = useState<Document[]>(() => {
+    try {
+      const cached = sessionStorage.getItem('dashboard_recent_docs_cache');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return [];
+  });
+
+  const [recentConversations, setRecentConversations] = useState<Conversation[]>(() => {
+    try {
+      const cached = sessionStorage.getItem('dashboard_recent_convs_cache');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return [];
+  });
+
+  const [recentSummaries, setRecentSummaries] = useState<Summary[]>(() => {
+    try {
+      const cached = sessionStorage.getItem('dashboard_recent_sums_cache');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return [];
+  });
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Upload modal state
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -39,24 +72,46 @@ export const DashboardPage: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const fetchDashboardData = async () => {
-    setLoading(true);
-    setError(null);
+    setIsRefreshing(true);
     try {
-      const [statsRes, docsRes, convsRes, summariesRes] = await Promise.all([
+      const results = await Promise.allSettled([
         api.getDashboardStats(),
         api.getDocuments({ page: 1, pageSize: 5, sortBy: 'createdAt', sortOrder: 'desc' }),
         api.getConversations(),
         api.getSummaries(),
       ]);
 
-      setStats(statsRes);
-      setRecentDocs(docsRes.items);
-      setRecentConversations(convsRes.slice(0, 4));
-      setRecentSummaries(summariesRes.slice(0, 4));
-    } catch (err: any) {
-      setError(err.message || 'Failed to load dashboard data');
+      if (results[0].status === 'fulfilled') {
+        setStats(results[0].value);
+        try {
+          sessionStorage.setItem('dashboard_stats_cache', JSON.stringify(results[0].value));
+        } catch {}
+      }
+      if (results[1].status === 'fulfilled') {
+        const docs = results[1].value.items || [];
+        setRecentDocs(docs);
+        try {
+          sessionStorage.setItem('dashboard_recent_docs_cache', JSON.stringify(docs));
+        } catch {}
+      }
+      if (results[2].status === 'fulfilled') {
+        const convs = (results[2].value || []).slice(0, 4);
+        setRecentConversations(convs);
+        try {
+          sessionStorage.setItem('dashboard_recent_convs_cache', JSON.stringify(convs));
+        } catch {}
+      }
+      if (results[3].status === 'fulfilled') {
+        const sums = (results[3].value || []).slice(0, 4);
+        setRecentSummaries(sums);
+        try {
+          sessionStorage.setItem('dashboard_recent_sums_cache', JSON.stringify(sums));
+        } catch {}
+      }
+    } catch (err) {
+      console.warn('Dashboard background sync note:', err);
     } finally {
-      setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -80,27 +135,20 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  if (error) {
-    return (
-      <div className="p-8 rounded-2xl bg-white border border-red-200 shadow-subtle text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto">
-          <AlertCircle className="w-6 h-6" />
-        </div>
-        <h3 className="text-lg font-semibold text-charcoal-900">Unable to load dashboard</h3>
-        <p className="text-sm text-charcoal-500 max-w-md mx-auto">{error}</p>
-        <Button variant="primary" onClick={fetchDashboardData}>
-          Try Again
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
       {/* Page Heading & Quick Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Workspace Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Workspace Dashboard</h1>
+            {isRefreshing && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                <RotateCw className="w-3 h-3 animate-spin" />
+                Syncing
+              </span>
+            )}
+          </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Welcome back! Here is an overview of your indexed knowledge base and AI sessions.
           </p>
@@ -125,79 +173,73 @@ export const DashboardPage: React.FC = () => {
 
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {loading ? (
-          Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-        ) : (
-          <>
-            <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700/60 transition-all duration-200 group">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Total Documents
-                </span>
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
-                  <FileText className="w-5 h-5" />
-                </div>
-              </div>
-              <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {stats?.totalDocuments ?? 0}
-              </p>
-              <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
-                <span>PDFs, DOCX, TXT files</span>
-              </div>
+        <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700/60 transition-all duration-200 group">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Total Documents
+            </span>
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
+              <FileText className="w-5 h-5" />
             </div>
+          </div>
+          <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            {stats?.totalDocuments ?? 0}
+          </p>
+          <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
+            <span>PDFs, DOCX, TXT files</span>
+          </div>
+        </div>
 
-            <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700/60 transition-all duration-200 group">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Collections
-                </span>
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
-                  <Folder className="w-5 h-5" />
-                </div>
-              </div>
-              <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {stats?.totalCollections ?? 0}
-              </p>
-              <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
-                <span>Organized workspaces</span>
-              </div>
+        <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700/60 transition-all duration-200 group">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Collections
+            </span>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
+              <Folder className="w-5 h-5" />
             </div>
+          </div>
+          <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            {stats?.totalCollections ?? 0}
+          </p>
+          <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
+            <span>Organized workspaces</span>
+          </div>
+        </div>
 
-            <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700/60 transition-all duration-200 group">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Conversations
-                </span>
-                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
-                  <MessageSquare className="w-5 h-5" />
-                </div>
-              </div>
-              <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {stats?.totalConversations ?? 0}
-              </p>
-              <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
-                <span>RAG inquiry sessions</span>
-              </div>
+        <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700/60 transition-all duration-200 group">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Conversations
+            </span>
+            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
+              <MessageSquare className="w-5 h-5" />
             </div>
+          </div>
+          <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            {stats?.totalConversations ?? 0}
+          </p>
+          <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
+            <span>RAG inquiry sessions</span>
+          </div>
+        </div>
 
-            <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700/60 transition-all duration-200 group">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Summaries
-                </span>
-                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
-                  <FileCheck className="w-5 h-5" />
-                </div>
-              </div>
-              <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {stats?.totalSummaries ?? 0}
-              </p>
-              <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
-                <span>Executive & bullet syntheses</span>
-              </div>
+        <div className="p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-sm shadow-xs hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700/60 transition-all duration-200 group">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Summaries
+            </span>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/50 flex items-center justify-center transition-transform group-hover:scale-105">
+              <FileCheck className="w-5 h-5" />
             </div>
-          </>
-        )}
+          </div>
+          <p className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            {stats?.totalSummaries ?? 0}
+          </p>
+          <div className="mt-2 flex items-center text-xs text-slate-500 dark:text-slate-400">
+            <span>Executive & bullet syntheses</span>
+          </div>
+        </div>
       </div>
 
       {/* Recent Documents Table */}
@@ -217,9 +259,7 @@ export const DashboardPage: React.FC = () => {
           </Button>
         </div>
 
-        {loading ? (
-          <SkeletonTable rows={4} columns={5} />
-        ) : recentDocs.length === 0 ? (
+        {recentDocs.length === 0 ? (
           <EmptyState
             icon={<FileText className="w-6 h-6" />}
             title="No documents yet"
@@ -311,13 +351,7 @@ export const DashboardPage: React.FC = () => {
             </Button>
           </div>
 
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((n) => (
-                <div key={n} className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
-              ))}
-            </div>
-          ) : recentConversations.length === 0 ? (
+          {recentConversations.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
               No conversations started yet. Launch an AI chat to explore your documents.
             </div>
@@ -364,13 +398,7 @@ export const DashboardPage: React.FC = () => {
             </Button>
           </div>
 
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((n) => (
-                <div key={n} className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
-              ))}
-            </div>
-          ) : recentSummaries.length === 0 ? (
+          {recentSummaries.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
               No summaries generated yet. Open a document to generate structured summaries.
             </div>

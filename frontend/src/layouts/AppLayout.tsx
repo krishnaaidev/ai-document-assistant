@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '@/services/api';
 import {
   LayoutDashboard,
   FileText,
@@ -141,6 +142,26 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [engineReady, setEngineReady] = useState<boolean | null>(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const check = async () => {
+      try {
+        const ok = await api.checkHealth();
+        if (mounted) setEngineReady(ok);
+      } catch {
+        if (mounted) setEngineReady(false);
+      }
+    };
+    check();
+    // Keep-alive ping every 8 minutes to prevent Render free instance from spinning down
+    const interval = setInterval(check, 8 * 60 * 1000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#090D16] text-slate-900 dark:text-slate-100 flex transition-colors duration-200">
@@ -225,10 +246,17 @@ export default function AppLayout() {
         {/* Desktop top header bar */}
         <header className="hidden lg:flex items-center justify-between h-14 px-8 border-b border-slate-200/70 dark:border-slate-800/80 bg-white/60 dark:bg-[#0D111D]/60 backdrop-blur-md sticky top-0 z-20 transition-colors duration-200">
           <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/50 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              AI Knowledge Engine: Ready
-            </span>
+            {engineReady === false ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/50 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                Cloud Engine: Warming Up...
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/50 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                AI Knowledge Engine: Ready
+              </span>
+            )}
             <span className="hidden xl:inline text-slate-400 dark:text-slate-600">•</span>
             <span className="hidden xl:inline">Pinecone + Supabase + Gemini 1.5</span>
           </div>

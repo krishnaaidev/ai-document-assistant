@@ -24,6 +24,7 @@ from app.api.conversations import router as conversations_router
 from app.api.chat import router as chat_router
 from app.api.summaries import router as summaries_router
 from app.api.search import router as search_router
+from app.api.dashboard import router as dashboard_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -154,6 +155,7 @@ app.include_router(conversations_router, prefix=api_prefix)
 app.include_router(chat_router, prefix=api_prefix)
 app.include_router(summaries_router, prefix=api_prefix)
 app.include_router(search_router, prefix=api_prefix)
+app.include_router(dashboard_router, prefix=api_prefix)
 
 
 @app.get("/")

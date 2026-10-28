@@ -21,10 +21,14 @@ export const setTokenProvider = (provider: () => Promise<string | null>) => {
   tokenProvider = provider;
 };
 
-// Generic request helper
+interface CustomRequestOptions extends RequestInit {
+  timeoutMs?: number;
+}
+
+// Generic request helper with fast-abort timeout
 async function request<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: CustomRequestOptions = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   const headers = new Headers(options.headers || {});
@@ -44,11 +48,17 @@ async function request<T>(
     }
   }
 
+  const timeoutMs = options.timeoutMs ?? (options.method === 'POST' ? 45000 : 4000);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     const response = await fetch(url, {
       ...options,
       headers,
+      signal: options.signal || controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       let errorData: any = {};
@@ -72,6 +82,16 @@ async function request<T>(
 
     return (await response.json()) as T;
   } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      console.warn(`Request to ${endpoint} timed out after ${timeoutMs}ms. Using instant fallback.`);
+      const timeoutError: ApiError = {
+        message: 'Request timed out waiting for cloud instance response.',
+        status: 408,
+        code: 'TIMEOUT',
+      };
+      throw timeoutError;
+    }
     if (err.status) {
       throw err;
     }
@@ -612,7 +632,11 @@ export const api = {
   // Dashboard Stats & Activity
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      return await request<DashboardStats>('/api/dashboard/stats');
+      const stats = await request<DashboardStats>('/api/dashboard/stats', { timeoutMs: 3500 });
+      try {
+        sessionStorage.setItem('dashboard_stats_cache', JSON.stringify(stats));
+      } catch {}
+      return stats;
     } catch {
       return {
         totalDocuments: mockDocuments.length,
@@ -625,9 +649,18 @@ export const api = {
 
   async getRecentActivity(): Promise<ActivityItem[]> {
     try {
-      return await request<ActivityItem[]>('/api/activity');
+      return await request<ActivityItem[]>('/api/activity', { timeoutMs: 3500 });
     } catch {
       return [];
+    }
+  },
+
+  async checkHealth(): Promise<boolean> {
+    try {
+      const res = await request<{ status: string }>('/api/health', { timeoutMs: 3000 });
+      return res.status === 'healthy';
+    } catch {
+      return false;
     }
   },
 };
