@@ -188,21 +188,32 @@ class ConversationDetailResponse(ConversationResponse):
 
 # Chat / RAG Schemas
 class ChatRequest(BaseModel):
-    question: str = Field(min_length=1, description="User's query")
-    conversation_id: Optional[uuid.UUID] = Field(default=None, description="Existing conversation ID or null for new")
-    retrieval_scope: str = Field(default="all", description="'all', 'document', or 'collection'")
-    document_id: Optional[uuid.UUID] = Field(default=None, description="Target document ID if scope is 'document'")
-    collection_id: Optional[uuid.UUID] = Field(default=None, description="Target collection ID if scope is 'collection'")
+    model_config = ConfigDict(extra="ignore")
+
+    question: Optional[str] = Field(default=None, description="User query")
+    message: Optional[str] = Field(default=None, description="User query (frontend alias)")
+    conversation_id: Optional[uuid.UUID] = Field(default=None, description="Conversation ID")
+    conversationId: Optional[uuid.UUID] = Field(default=None, description="Conversation ID alias")
+    retrieval_scope: Optional[str] = Field(default="all", description="'all', 'document', or 'collection'")
+    scope: Optional[Any] = Field(default=None, description="Frontend scope object or string")
+    document_id: Optional[uuid.UUID] = Field(default=None, description="Target document ID")
+    documentId: Optional[uuid.UUID] = Field(default=None, description="Target document ID alias")
+    collection_id: Optional[uuid.UUID] = Field(default=None, description="Target collection ID")
+    collectionId: Optional[uuid.UUID] = Field(default=None, description="Target collection ID alias")
     top_k: Optional[int] = Field(default=None, ge=1, le=20, description="Override default top_k chunks retrieved")
 
 
 class ChatResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     conversation_id: uuid.UUID
     message_id: uuid.UUID
     answer: str
     citations: List[CitationItem] = []
     token_usage: TokenUsage = TokenUsage()
     created_at: datetime
+    message: Optional[Any] = None
+    conversationId: Optional[str] = None
 
 
 # Summary Schemas

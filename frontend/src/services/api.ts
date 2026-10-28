@@ -719,72 +719,49 @@ export const api = {
   },
 
   async sendMessage(req: ChatRequest): Promise<ChatResponse> {
-    try {
-      return await request<ChatResponse>('/api/chat', {
-        method: 'POST',
-        body: JSON.stringify(req),
-      });
-    } catch {
-      // Mock chat completion response
-      let targetConvId = req.conversationId;
-      if (!targetConvId) {
-        const newConv: Conversation = {
-          id: 'conv-' + Date.now(),
-          title: req.message.slice(0, 32) + '...',
-          scope: req.scope,
-          messageCount: 2,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        mockConversations.unshift(newConv);
-        mockMessages[newConv.id] = [];
-        targetConvId = newConv.id;
-      }
+    const payload = {
+      question: req.message,
+      message: req.message,
+      conversation_id: req.conversationId,
+      conversationId: req.conversationId,
+      document_id: req.scope?.type === 'document' ? (req.scope.documentId || (req.scope as any).id) : undefined,
+      collection_id: req.scope?.type === 'collection' ? (req.scope.collectionId || (req.scope as any).id) : undefined,
+      retrieval_scope: req.scope?.type || 'all',
+      scope: req.scope,
+    };
 
-      // Add user message to history
-      const userMsg: Message = {
-        id: 'msg-u-' + Date.now(),
-        conversationId: targetConvId,
-        role: 'user',
-        content: req.message,
-        createdAt: new Date().toISOString(),
-      };
-      if (!mockMessages[targetConvId]) mockMessages[targetConvId] = [];
-      mockMessages[targetConvId].push(userMsg);
+    const res: any = await request<any>('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
 
-      // Generate context-aware assistant message
-      const referencedDoc = mockDocuments[0];
-      const assistantMsg: Message = {
-        id: 'msg-a-' + Date.now(),
-        conversationId: targetConvId,
-        role: 'assistant',
-        content: `Based on your indexed documents, here is the relevant analysis regarding "${req.message}":\n\n1. **Core Insight**: The documentation indicates consistent alignment with targeted objectives and verified parameters.\n2. **Detailed Breakdown**: Analysis confirms that requirements were verified across the extracted text chunks with high retrieval confidence.\n\nFeel free to ask if you would like me to deep dive into specific sections or summarize additional files!`,
-        citations: [
-          {
-            id: 'cit-' + Date.now(),
-            documentId: referencedDoc?.id || 'doc-1',
-            filename: referencedDoc?.filename || 'Q3_Financial_Performance_Report.pdf',
-            pageNumber: 1,
-            chunkId: 'chk-auto-1',
-            excerpt: referencedDoc?.extractedText?.slice(0, 180) || 'Verified document excerpt content.',
-            score: 0.93,
-          },
-        ],
-        createdAt: new Date().toISOString(),
-      };
-      mockMessages[targetConvId].push(assistantMsg);
-
-      const conv = mockConversations.find((c) => c.id === targetConvId);
-      if (conv) {
-        conv.lastMessageAt = assistantMsg.createdAt;
-        conv.messageCount = mockMessages[targetConvId].length;
-      }
-
-      return {
-        conversationId: targetConvId,
-        message: assistantMsg,
-      };
+    if (res.message && res.conversationId) {
+      return res as ChatResponse;
     }
+
+    const convId = res.conversation_id || res.conversationId || req.conversationId;
+    const msgId = res.message_id || 'msg-' + Date.now();
+    const assistantMsg: Message = {
+      id: msgId,
+      conversationId: convId,
+      role: 'assistant',
+      content: res.answer || res.content || '',
+      citations: (res.citations || []).map((c: any, i: number) => ({
+        id: c.chunk_id || c.id || 'cit-' + i,
+        documentId: c.document_id || c.documentId || '',
+        filename: c.filename || '',
+        pageNumber: c.page_num || c.pageNumber || 1,
+        chunkId: c.chunk_id || c.chunkId || '',
+        excerpt: c.excerpt || c.snippet || '',
+        score: c.score || 0,
+      })),
+      createdAt: res.created_at || new Date().toISOString(),
+    };
+
+    return {
+      conversationId: convId,
+      message: assistantMsg,
+    };
   },
 
   // Summaries
