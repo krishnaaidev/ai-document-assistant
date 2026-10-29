@@ -13,6 +13,8 @@ import {
   ApiError,
 } from '@/types';
 import { API_BASE_URL, GEMINI_API_KEY } from '@/utils/constants';
+import { extractTextFromFile, extractTextFromBase64 } from '@/utils/documentExtractor';
+import { generateDocumentAnswer } from '@/utils/documentQA';
 
 // Token provider callback
 let tokenProvider: (() => Promise<string | null>) | null = null;
@@ -326,15 +328,13 @@ export const api = {
 
         let extractedContent = '';
         try {
-          if (file.name.endsWith('.txt')) {
-            extractedContent = await file.text();
-          }
+          extractedContent = await extractTextFromFile(file);
         } catch (e) {
-          console.warn('Text file read error:', e);
+          console.warn('Document text extraction error:', e);
         }
 
         if (!extractedContent) {
-          extractedContent = `Document: "${file.name}"\nSize: ${(file.size / 1024).toFixed(1)} KB\nIndexed for deep analysis with Gemini 3.5 Flash Lite.`;
+          extractedContent = `Document: "${file.name}"\nSize: ${(file.size / 1024).toFixed(1)} KB\nIndexed for intelligent analysis with AI Document Assistant.`;
         }
 
         let percent = 0;
@@ -758,30 +758,39 @@ export const api = {
         req.scope?.type === 'document' ? d.id === (req.scope.documentId || (req.scope as any).id) : true
       ) || mockDocuments[0];
 
+      // On-the-fly re-extraction if document text is empty or a placeholder
+      if (
+        matchedDoc &&
+        matchedDoc.fileBase64 &&
+        (!matchedDoc.extractedText ||
+          matchedDoc.extractedText.startsWith('Document: "') ||
+          matchedDoc.extractedText.startsWith('PK !') ||
+          matchedDoc.extractedText.length < 50)
+      ) {
+        try {
+          const reExtracted = await extractTextFromBase64(matchedDoc.fileBase64, matchedDoc.filename);
+          if (reExtracted && reExtracted.trim().length > 30) {
+            matchedDoc.extractedText = reExtracted;
+            saveToStorage('doc_assistant_docs', mockDocuments);
+          }
+        } catch (reErr) {
+          console.warn('On-the-fly text re-extraction failed:', reErr);
+        }
+      }
+
       let answerText = "";
+      let citations: any[] = [];
+
+      // Attempt live Gemini model if API key is functional
       try {
         const parts: any[] = [];
-        if (matchedDoc?.fileBase64) {
-          parts.push({
-            inline_data: {
-              mime_type: matchedDoc.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              data: matchedDoc.fileBase64,
-            },
-          });
-          parts.push({
-            text: `You are an expert AI Document Assistant powered by Gemini 3.5 Flash Lite.
-Answer the user's question accurately, thoroughly, and professionally based on the document attached.
-Format your answer with clear Markdown headings, bullet points, and key details.
+        let cleanContext = matchedDoc?.extractedText || '';
+        if (cleanContext.startsWith('PK !') || cleanContext.includes('[Content_Types].xml')) {
+          cleanContext = `Document: "${matchedDoc?.title || matchedDoc?.filename || 'Knowledge Base'}"`;
+        }
 
-Question: ${req.message}`,
-          });
-        } else {
-          let cleanContext = matchedDoc?.extractedText || '';
-          if (cleanContext.startsWith('PK !') || cleanContext.includes('[Content_Types].xml')) {
-            cleanContext = `Document: "${matchedDoc?.title || matchedDoc?.filename || 'Knowledge Base'}"`;
-          }
-          parts.push({
-            text: `You are an expert AI Document Assistant powered by Gemini 3.5 Flash Lite.
+        parts.push({
+          text: `You are an expert AI Document Assistant.
 Answer the user's question accurately, thoroughly, and professionally based on the document topic and context below.
 Format your answer with clear Markdown headings, bullet points, and key details.
 
@@ -790,11 +799,10 @@ Context:
 ${cleanContext.slice(0, 30000)}
 
 Question: ${req.message}`,
-          });
-        }
+        });
 
         const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -809,8 +817,32 @@ Question: ${req.message}`,
         console.warn("Direct Gemini generation error:", geminiError);
       }
 
+      // If Gemini API is unreachable or returns empty, run intelligent local Document Q&A engine
+      if (!answerText && matchedDoc) {
+        const qaResult = generateDocumentAnswer(
+          req.message,
+          matchedDoc.title || matchedDoc.filename,
+          matchedDoc.extractedText || '',
+          matchedDoc.id
+        );
+        answerText = qaResult.answer;
+        citations = qaResult.citations;
+      }
+
       if (!answerText) {
-        answerText = `I have indexed "${matchedDoc?.title || matchedDoc?.filename || 'your document'}". You can ask questions, request an executive summary, or explore specific topics and experiments.`;
+        answerText = `### Analysis for ${matchedDoc?.title || matchedDoc?.filename || 'Document'}\n\nI reviewed your question regarding **"${req.message}"**. Please upload or select a specific document to view an in-depth answer with exact citations.`;
+      }
+
+      if (citations.length === 0 && matchedDoc) {
+        citations = [{
+          id: 'cit-' + Date.now(),
+          documentId: matchedDoc.id,
+          filename: matchedDoc.filename,
+          pageNumber: 1,
+          chunkId: 'chunk-1',
+          excerpt: (matchedDoc.extractedText || matchedDoc.title || matchedDoc.filename).slice(0, 160) + '...',
+          score: 0.95,
+        }];
       }
 
       const assistantMsg: Message = {
@@ -818,15 +850,7 @@ Question: ${req.message}`,
         conversationId: convId,
         role: 'assistant',
         content: answerText,
-        citations: matchedDoc ? [{
-          id: 'cit-' + Date.now(),
-          documentId: matchedDoc.id,
-          filename: matchedDoc.filename,
-          pageNumber: 1,
-          chunkId: 'chunk-1',
-          excerpt: matchedDoc.title || matchedDoc.filename,
-          score: 0.98,
-        }] : [],
+        citations,
         createdAt: new Date().toISOString(),
       };
 
@@ -884,40 +908,46 @@ Question: ${req.message}`,
       return res;
     } catch {
       const doc = mockDocuments.find((d) => d.id === documentId);
+      if (
+        doc &&
+        doc.fileBase64 &&
+        (!doc.extractedText ||
+          doc.extractedText.startsWith('Document: "') ||
+          doc.extractedText.startsWith('PK !') ||
+          doc.extractedText.length < 50)
+      ) {
+        try {
+          const reExtracted = await extractTextFromBase64(doc.fileBase64, doc.filename);
+          if (reExtracted && reExtracted.trim().length > 30) {
+            doc.extractedText = reExtracted;
+            saveToStorage('doc_assistant_docs', mockDocuments);
+          }
+        } catch (reErr) {
+          console.warn('Summary text re-extraction failed:', reErr);
+        }
+      }
+
       let summaryText = "";
 
       try {
         const parts: any[] = [];
-        if (doc?.fileBase64) {
-          parts.push({
-            inline_data: {
-              mime_type: doc.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              data: doc.fileBase64,
-            },
-          });
-          parts.push({
-            text: `You are an expert document summarization assistant powered by Gemini 3.5 Flash Lite.
-Generate a high-quality ${summaryType.toUpperCase()} summary of the attached document.
-Structure the summary clearly with Markdown headers, key highlights, and main conclusions.`,
-          });
-        } else {
-          let cleanContext = doc?.extractedText || '';
-          if (cleanContext.startsWith('PK !') || cleanContext.includes('[Content_Types].xml')) {
-            cleanContext = `Document: "${doc?.title || doc?.filename || 'Document'}"`;
-          }
-          parts.push({
-            text: `You are an expert document summarization assistant powered by Gemini 3.5 Flash Lite.
+        let cleanContext = doc?.extractedText || '';
+        if (cleanContext.startsWith('PK !') || cleanContext.includes('[Content_Types].xml')) {
+          cleanContext = `Document: "${doc?.title || doc?.filename || 'Knowledge Base'}"`;
+        }
+
+        parts.push({
+          text: `You are an expert document summarization assistant.
 Generate a high-quality ${summaryType.toUpperCase()} summary of the following document.
 Structure the summary clearly with Markdown headers, key highlights, and main conclusions.
 
 Document: ${doc?.title || doc?.filename || 'Knowledge Base'}
 Content:
 ${cleanContext.slice(0, 30000)}`,
-          });
-        }
+        });
 
         const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -932,8 +962,18 @@ ${cleanContext.slice(0, 30000)}`,
         console.warn("Direct Gemini summary error:", geminiError);
       }
 
+      if (!summaryText && doc) {
+        const qaResult = generateDocumentAnswer(
+          `Please provide a comprehensive ${summaryType} summary, main conclusions, and key findings for this document`,
+          doc.title || doc.filename,
+          doc.extractedText || '',
+          doc.id
+        );
+        summaryText = qaResult.answer;
+      }
+
       if (!summaryText) {
-        summaryText = `### ${summaryType.toUpperCase()} Summary for ${doc?.title || 'Document'}\n\nKey takeaways and structural insights generated with Gemini 3.5 Flash Lite.`;
+        summaryText = `### ${summaryType.toUpperCase()} Summary for ${doc?.title || 'Document'}\n\nKey takeaways and structural insights generated from the document.`;
       }
 
       const newSummary: Summary = {

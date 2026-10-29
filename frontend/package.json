@@ -11,16 +11,19 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/jszip": "^3.4.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "firebase": "^11.1.0",
+    "jszip": "^3.10.2",
+    "lucide-react": "^0.468.0",
+    "pdfjs-dist": "^6.4.299",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.1",
-    "firebase": "^11.1.0",
-    "lucide-react": "^0.468.0",
-    "react-markdown": "^9.0.1",
-    "remark-gfm": "^4.0.0",
     "react-hot-toast": "^2.4.1",
-    "clsx": "^2.1.1",
-    "date-fns": "^4.1.0"
+    "react-markdown": "^9.0.1",
+    "react-router-dom": "^6.28.1",
+    "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",

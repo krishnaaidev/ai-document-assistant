@@ -56,9 +56,9 @@ class GeminiProvider(BaseLLMProvider):
         try:
             import google.generativeai as genai
             genai.configure(api_key=self.api_key, transport="rest")
-            target_model = self.model_name or "gemini-3.5-flash-lite"
-            if "1.5" in target_model or "2.0" in target_model:
-                target_model = "gemini-3.5-flash-lite"
+            target_model = self.model_name or "gemini-1.5-flash"
+            if "3.5" in target_model:
+                target_model = "gemini-1.5-flash"
             self.model_name = target_model
             self._model = genai.GenerativeModel(self.model_name)
             logger.info("Google Gemini fast model '%s' initialized successfully", self.model_name)
@@ -80,11 +80,11 @@ class GeminiProvider(BaseLLMProvider):
             response = self._model.generate_content(prompt)
             return response.text
         except Exception as e:
-            if "not found" in str(e).lower() and self.model_name != "gemini-3.5-flash-lite":
-                logger.warning("Model %s not found, switching to gemini-3.5-flash-lite", self.model_name)
+            if "not found" in str(e).lower() and self.model_name != "gemini-1.5-flash":
+                logger.warning("Model %s not found, switching to gemini-1.5-flash", self.model_name)
                 import google.generativeai as genai
-                self.model_name = "gemini-3.5-flash-lite"
-                self._model = genai.GenerativeModel("gemini-3.5-flash-lite")
+                self.model_name = "gemini-1.5-flash"
+                self._model = genai.GenerativeModel("gemini-1.5-flash")
                 response = self._model.generate_content(prompt)
                 return response.text
             raise
