@@ -31,7 +31,15 @@ export function useChat(initialConversationId?: string, initialScope?: Conversat
       .getMessages(conversationId)
       .then((msgs) => {
         if (isMounted) {
-          setMessages(msgs);
+          setMessages((prev) => {
+            if (msgs && msgs.length > 0) {
+              return msgs;
+            }
+            if (prev.length > 0 && (!prev[0].conversationId || prev[0].conversationId === conversationId)) {
+              return prev;
+            }
+            return [];
+          });
         }
       })
       .catch((err) => {

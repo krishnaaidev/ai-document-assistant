@@ -105,12 +105,27 @@ async function request<T>(
   }
 }
 
-// ----------------- Client-side Data Stores (Clean & Empty) -----------------
-const mockDocuments: Document[] = [];
-const mockCollections: Collection[] = [];
-const mockConversations: Conversation[] = [];
-const mockMessages: Record<string, Message[]> = {};
-const mockSummaries: Summary[] = [];
+// ----------------- Client-side Data Stores (Persisted in LocalStorage) -----------------
+function loadFromStorage<T>(key: string, defaultValue: T): T {
+  try {
+    const val = localStorage.getItem(key);
+    return val ? JSON.parse(val) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+function saveToStorage<T>(key: string, val: T): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch {}
+}
+
+const mockDocuments: Document[] = loadFromStorage('doc_assistant_docs', []);
+const mockCollections: Collection[] = loadFromStorage('doc_assistant_colls', []);
+const mockConversations: Conversation[] = loadFromStorage('doc_assistant_convs', []);
+const mockMessages: Record<string, Message[]> = loadFromStorage('doc_assistant_msgs', {});
+const mockSummaries: Summary[] = loadFromStorage('doc_assistant_sums', []);
 
 // ----------------- API Methods with Resilient Fallback -----------------
 
@@ -497,10 +512,17 @@ export const api = {
   // Conversations & Chat
   async getConversations(): Promise<Conversation[]> {
     try {
-      return await request<Conversation[]>('/api/conversations');
-    } catch {
-      return [...mockConversations];
-    }
+      const res = await request<Conversation[]>('/api/conversations', { timeoutMs: 3000 });
+      if (res && res.length > 0) {
+        for (const c of res) {
+          if (!mockConversations.some((mc) => mc.id === c.id)) {
+            mockConversations.push(c);
+          }
+        }
+        saveToStorage('doc_assistant_convs', mockConversations);
+      }
+    } catch {}
+    return [...mockConversations];
   },
 
   async getConversation(id: string): Promise<Conversation> {
@@ -518,10 +540,13 @@ export const api = {
     scope: Conversation['scope'];
   }): Promise<Conversation> {
     try {
-      return await request<Conversation>('/api/conversations', {
+      const newConv = await request<Conversation>('/api/conversations', {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      mockConversations.unshift(newConv);
+      saveToStorage('doc_assistant_convs', mockConversations);
+      return newConv;
     } catch {
       const newConv: Conversation = {
         id: 'conv-' + Date.now(),
@@ -533,21 +558,28 @@ export const api = {
       };
       mockConversations.unshift(newConv);
       mockMessages[newConv.id] = [];
+      saveToStorage('doc_assistant_convs', mockConversations);
+      saveToStorage('doc_assistant_msgs', mockMessages);
       return newConv;
     }
   },
 
   async renameConversation(id: string, title: string): Promise<Conversation> {
     try {
-      return await request<Conversation>(`/api/conversations/${id}`, {
+      const res = await request<Conversation>(`/api/conversations/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ title }),
       });
+      const conv = mockConversations.find((c) => c.id === id);
+      if (conv) conv.title = title;
+      saveToStorage('doc_assistant_convs', mockConversations);
+      return res;
     } catch {
       const conv = mockConversations.find((c) => c.id === id);
       if (!conv) throw { message: 'Conversation not found', status: 404 };
       conv.title = title;
       conv.updatedAt = new Date().toISOString();
+      saveToStorage('doc_assistant_convs', mockConversations);
       return { ...conv };
     }
   },
@@ -555,19 +587,24 @@ export const api = {
   async deleteConversation(id: string): Promise<void> {
     try {
       await request(`/api/conversations/${id}`, { method: 'DELETE' });
-    } catch {
-      const idx = mockConversations.findIndex((c) => c.id === id);
-      if (idx !== -1) mockConversations.splice(idx, 1);
-      delete mockMessages[id];
-    }
+    } catch {}
+    const idx = mockConversations.findIndex((c) => c.id === id);
+    if (idx !== -1) mockConversations.splice(idx, 1);
+    delete mockMessages[id];
+    saveToStorage('doc_assistant_convs', mockConversations);
+    saveToStorage('doc_assistant_msgs', mockMessages);
   },
 
   async getMessages(conversationId: string): Promise<Message[]> {
     try {
-      return await request<Message[]>(`/api/conversations/${conversationId}/messages`);
-    } catch {
-      return mockMessages[conversationId] || [];
-    }
+      const res = await request<Message[]>(`/api/conversations/${conversationId}/messages`, { timeoutMs: 3000 });
+      if (res && res.length > 0) {
+        mockMessages[conversationId] = res;
+        saveToStorage('doc_assistant_msgs', mockMessages);
+        return res;
+      }
+    } catch {}
+    return mockMessages[conversationId] || [];
   },
 
   async sendMessage(req: ChatRequest): Promise<ChatResponse> {
@@ -582,6 +619,44 @@ export const api = {
       scope: req.scope,
     };
 
+    const recordChatMessage = (cId: string, question: string, aMsg: Message) => {
+      const uMsg: Message = {
+        id: 'msg-u-' + (Date.now() - 50),
+        conversationId: cId,
+        role: 'user',
+        content: question,
+        createdAt: new Date(Date.now() - 50).toISOString(),
+      };
+      if (!mockMessages[cId]) {
+        mockMessages[cId] = [];
+      }
+      if (!mockMessages[cId].some((m) => m.id === uMsg.id || (m.role === 'user' && m.content === question))) {
+        mockMessages[cId].push(uMsg);
+      }
+      if (!mockMessages[cId].some((m) => m.id === aMsg.id)) {
+        mockMessages[cId].push(aMsg);
+      }
+      saveToStorage('doc_assistant_msgs', mockMessages);
+
+      let conv = mockConversations.find((c) => c.id === cId);
+      const title = question.slice(0, 45) + (question.length > 45 ? '...' : '');
+      if (!conv) {
+        conv = {
+          id: cId,
+          title: title || 'New Conversation',
+          scope: req.scope || { type: 'all' },
+          messageCount: mockMessages[cId].length,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        mockConversations.unshift(conv);
+      } else {
+        conv.messageCount = mockMessages[cId].length;
+        conv.updatedAt = new Date().toISOString();
+      }
+      saveToStorage('doc_assistant_convs', mockConversations);
+    };
+
     try {
       const res: any = await request<any>('/api/chat', {
         method: 'POST',
@@ -590,6 +665,7 @@ export const api = {
       });
 
       if (res.message && res.conversationId) {
+        recordChatMessage(res.conversationId, req.message, res.message);
         return res as ChatResponse;
       }
 
@@ -612,6 +688,7 @@ export const api = {
         createdAt: res.created_at || new Date().toISOString(),
       };
 
+      recordChatMessage(convId, req.message, assistantMsg);
       return {
         conversationId: convId,
         message: assistantMsg,
@@ -693,6 +770,8 @@ Question: ${req.message}`,
         }] : [],
         createdAt: new Date().toISOString(),
       };
+
+      recordChatMessage(convId, req.message, assistantMsg);
 
       return {
         conversationId: convId,

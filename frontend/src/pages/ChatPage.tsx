@@ -47,6 +47,7 @@ export const ChatPage: React.FC = () => {
     createConversation,
     renameConversation,
     deleteConversation,
+    refetch: refetchConversations,
   } = useConversations();
 
   const { documents } = useDocuments({ pageSize: 50 });
@@ -86,12 +87,13 @@ export const ChatPage: React.FC = () => {
     }
   }, [paramConvId]);
 
-  // When a new conversation gets created by sending message, update URL
+  // When a new conversation gets created by sending message, update URL and refetch sidebar list
   useEffect(() => {
     if (conversationId && conversationId !== paramConvId) {
       navigate(`/chat/${conversationId}`, { replace: true });
+      refetchConversations();
     }
-  }, [conversationId, paramConvId, navigate]);
+  }, [conversationId, paramConvId, navigate, refetchConversations]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -119,7 +121,10 @@ export const ChatPage: React.FC = () => {
     setInputMessage('');
 
     try {
-      await sendMessage(messageToSend);
+      const res = await sendMessage(messageToSend);
+      if (res?.conversationId) {
+        refetchConversations();
+      }
     } catch {
       // Re-fill input if sending failed
       setInputMessage(messageToSend);
