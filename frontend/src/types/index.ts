@@ -29,6 +29,8 @@ export interface Document {
   storagePath?: string;
   downloadUrl?: string;
   extractedText?: string;
+  fileBase64?: string;
+  mimeType?: string;
   errorMessage?: string;
   collectionIds?: string[];
   createdAt: string;

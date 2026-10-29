@@ -176,8 +176,8 @@ export default function AppLayout() {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed top-0 left-0 h-full bg-white dark:bg-[#0D111D] border-r border-slate-200/80 dark:border-slate-800/80 z-40 flex flex-col transition-all duration-200',
-          'lg:relative lg:translate-x-0',
+          'fixed top-0 left-0 h-screen bg-white dark:bg-[#0D111D] border-r border-slate-200/80 dark:border-slate-800/80 z-40 flex flex-col transition-all duration-200',
+          'lg:sticky lg:top-0 lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           collapsed ? 'w-16' : 'w-60'
         )}
@@ -202,8 +202,8 @@ export default function AppLayout() {
           ))}
         </nav>
 
-        {/* Bottom nav */}
-        <div className="px-3 py-3 border-t border-slate-100 dark:border-slate-800/60 space-y-1">
+        {/* Bottom nav - pinned firmly to bottom */}
+        <div className="mt-auto px-3 py-3 border-t border-slate-100 dark:border-slate-800/60 space-y-1 bg-white/80 dark:bg-[#0D111D]/80 backdrop-blur-xs flex-shrink-0">
           {bottomNavItems.map((item) => (
             <NavItem key={item.path} item={item} collapsed={collapsed} />
           ))}
