@@ -118,7 +118,29 @@ function loadFromStorage<T>(key: string, defaultValue: T): T {
 function saveToStorage<T>(key: string, val: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(val));
-  } catch {}
+  } catch (e) {
+    // If quota exceeded (e.g. from document base64), trim base64 to ensure metadata & text always persist
+    if (key === 'doc_assistant_docs' && Array.isArray(val)) {
+      try {
+        const safeDocs = val.map((d: any) => {
+          const { fileBase64, ...rest } = d;
+          return {
+            ...rest,
+            fileBase64: fileBase64 ? fileBase64.slice(0, 100000) : undefined,
+          };
+        });
+        localStorage.setItem(key, JSON.stringify(safeDocs));
+      } catch {
+        const metaOnly = val.map((d: any) => {
+          const { fileBase64, ...rest } = d;
+          return rest;
+        });
+        try {
+          localStorage.setItem(key, JSON.stringify(metaOnly));
+        } catch {}
+      }
+    }
+  }
 }
 
 const mockDocuments: Document[] = loadFromStorage('doc_assistant_docs', []);
@@ -153,48 +175,56 @@ export const api = {
       if (params?.sortOrder) queryParams.set('sortOrder', params.sortOrder);
 
       const qs = queryParams.toString();
-      return await request<PaginatedResponse<Document>>(`/api/documents${qs ? `?${qs}` : ''}`);
-    } catch {
-      // Fallback mock filtering
-      let items = [...mockDocuments];
-      if (params?.search) {
-        const s = params.search.toLowerCase();
-        items = items.filter(
-          (d) => d.title.toLowerCase().includes(s) || d.filename.toLowerCase().includes(s)
-        );
+      const res = await request<PaginatedResponse<Document>>(`/api/documents${qs ? `?${qs}` : ''}`, { timeoutMs: 3000 });
+      if (res && res.items && res.items.length > 0) {
+        for (const item of res.items) {
+          if (!mockDocuments.some((d) => d.id === item.id)) {
+            mockDocuments.push(item);
+          }
+        }
+        saveToStorage('doc_assistant_docs', mockDocuments);
       }
-      if (params?.status && params.status !== 'all') {
-        items = items.filter((d) => d.status === params.status);
-      }
-      if (params?.fileType && params.fileType !== 'all') {
-        items = items.filter((d) => d.fileType === params.fileType);
-      }
-      if (params?.collectionId && params.collectionId !== 'all') {
-        items = items.filter((d) => d.collectionIds?.includes(params.collectionId!));
-      }
+    } catch {}
 
-      // Sort
-      const sortBy = params?.sortBy || 'createdAt';
-      const order = params?.sortOrder === 'asc' ? 1 : -1;
-      items.sort((a: any, b: any) => {
-        if (a[sortBy] < b[sortBy]) return -1 * order;
-        if (a[sortBy] > b[sortBy]) return 1 * order;
-        return 0;
-      });
-
-      const page = params?.page || 1;
-      const pageSize = params?.pageSize || 10;
-      const start = (page - 1) * pageSize;
-      const paginated = items.slice(start, start + pageSize);
-
-      return {
-        items: paginated,
-        total: items.length,
-        page,
-        pageSize,
-        totalPages: Math.ceil(items.length / pageSize) || 1,
-      };
+    // Fallback & client-persisted documents filtering
+    let items = [...mockDocuments];
+    if (params?.search) {
+      const s = params.search.toLowerCase();
+      items = items.filter(
+        (d) => d.title.toLowerCase().includes(s) || d.filename.toLowerCase().includes(s)
+      );
     }
+    if (params?.status && params.status !== 'all') {
+      items = items.filter((d) => d.status === params.status);
+    }
+    if (params?.fileType && params.fileType !== 'all') {
+      items = items.filter((d) => d.fileType === params.fileType);
+    }
+    if (params?.collectionId && params.collectionId !== 'all') {
+      items = items.filter((d) => d.collectionIds?.includes(params.collectionId!));
+    }
+
+    // Sort
+    const sortBy = params?.sortBy || 'createdAt';
+    const order = params?.sortOrder === 'asc' ? 1 : -1;
+    items.sort((a: any, b: any) => {
+      if (a[sortBy] < b[sortBy]) return -1 * order;
+      if (a[sortBy] > b[sortBy]) return 1 * order;
+      return 0;
+    });
+
+    const page = params?.page || 1;
+    const pageSize = params?.pageSize || 10;
+    const start = (page - 1) * pageSize;
+    const paginated = items.slice(start, start + pageSize);
+
+    return {
+      items: paginated,
+      total: items.length,
+      page,
+      pageSize,
+      totalPages: Math.ceil(items.length / pageSize) || 1,
+    };
   },
 
   async getDocument(id: string): Promise<Document> {
@@ -245,7 +275,12 @@ export const api = {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const res = JSON.parse(xhr.responseText);
-              resolve(res.document || res);
+              const doc = res.document || res;
+              if (!mockDocuments.some((d) => d.id === doc.id)) {
+                mockDocuments.unshift(doc);
+              }
+              saveToStorage('doc_assistant_docs', mockDocuments);
+              resolve(doc);
             } catch {
               resolve(xhr.response as any);
             }
@@ -327,14 +362,14 @@ export const api = {
               mimeType: mime,
             };
             mockDocuments.unshift(newDoc);
+            saveToStorage('doc_assistant_docs', mockDocuments);
             try {
               sessionStorage.setItem('dashboard_recent_docs_cache', JSON.stringify(mockDocuments.slice(0, 5)));
-              const cachedStats = JSON.parse(sessionStorage.getItem('dashboard_stats_cache') || '{}');
               sessionStorage.setItem('dashboard_stats_cache', JSON.stringify({
-                totalDocuments: (cachedStats.totalDocuments || 0) + 1,
-                totalCollections: cachedStats.totalCollections || 0,
-                totalConversations: cachedStats.totalConversations || 0,
-                totalSummaries: cachedStats.totalSummaries || 0,
+                totalDocuments: mockDocuments.length,
+                totalCollections: mockCollections.length,
+                totalConversations: mockConversations.length,
+                totalSummaries: mockSummaries.length,
               }));
             } catch {}
             resolve(newDoc);
@@ -347,10 +382,10 @@ export const api = {
   async deleteDocument(id: string): Promise<void> {
     try {
       await request(`/api/documents/${id}`, { method: 'DELETE' });
-    } catch {
-      const idx = mockDocuments.findIndex((d) => d.id === id);
-      if (idx !== -1) mockDocuments.splice(idx, 1);
-    }
+    } catch {}
+    const idx = mockDocuments.findIndex((d) => d.id === id);
+    if (idx !== -1) mockDocuments.splice(idx, 1);
+    saveToStorage('doc_assistant_docs', mockDocuments);
   },
 
   async retryDocument(id: string): Promise<Document> {
@@ -396,10 +431,17 @@ export const api = {
   // Collections
   async getCollections(): Promise<Collection[]> {
     try {
-      return await request<Collection[]>('/api/collections');
-    } catch {
-      return [...mockCollections];
-    }
+      const res = await request<Collection[]>('/api/collections', { timeoutMs: 3000 });
+      if (res && res.length > 0) {
+        for (const c of res) {
+          if (!mockCollections.some((mc) => mc.id === c.id)) {
+            mockCollections.push(c);
+          }
+        }
+        saveToStorage('doc_assistant_colls', mockCollections);
+      }
+    } catch {}
+    return [...mockCollections];
   },
 
   async getCollection(id: string): Promise<Collection> {
@@ -414,10 +456,15 @@ export const api = {
 
   async createCollection(data: { name: string; description?: string }): Promise<Collection> {
     try {
-      return await request<Collection>('/api/collections', {
+      const newCol = await request<Collection>('/api/collections', {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      if (!mockCollections.some((c) => c.id === newCol.id)) {
+        mockCollections.unshift(newCol);
+      }
+      saveToStorage('doc_assistant_colls', mockCollections);
+      return newCol;
     } catch {
       const newCol: Collection = {
         id: 'col-' + Date.now(),
@@ -429,6 +476,7 @@ export const api = {
         updatedAt: new Date().toISOString(),
       };
       mockCollections.unshift(newCol);
+      saveToStorage('doc_assistant_colls', mockCollections);
       return newCol;
     }
   },
@@ -438,16 +486,25 @@ export const api = {
     data: { name: string; description?: string }
   ): Promise<Collection> {
     try {
-      return await request<Collection>(`/api/collections/${id}`, {
+      const res = await request<Collection>(`/api/collections/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       });
+      const col = mockCollections.find((c) => c.id === id);
+      if (col) {
+        col.name = data.name;
+        col.description = data.description;
+        col.updatedAt = new Date().toISOString();
+      }
+      saveToStorage('doc_assistant_colls', mockCollections);
+      return res;
     } catch {
       const col = mockCollections.find((c) => c.id === id);
       if (!col) throw { message: 'Collection not found', status: 404 };
       col.name = data.name;
       col.description = data.description;
       col.updatedAt = new Date().toISOString();
+      saveToStorage('doc_assistant_colls', mockCollections);
       return { ...col };
     }
   },
@@ -455,10 +512,10 @@ export const api = {
   async deleteCollection(id: string): Promise<void> {
     try {
       await request(`/api/collections/${id}`, { method: 'DELETE' });
-    } catch {
-      const idx = mockCollections.findIndex((c) => c.id === id);
-      if (idx !== -1) mockCollections.splice(idx, 1);
-    }
+    } catch {}
+    const idx = mockCollections.findIndex((c) => c.id === id);
+    if (idx !== -1) mockCollections.splice(idx, 1);
+    saveToStorage('doc_assistant_colls', mockCollections);
   },
 
   async addDocumentToCollection(collectionId: string, documentId: string): Promise<void> {
@@ -466,20 +523,21 @@ export const api = {
       await request(`/api/collections/${collectionId}/documents/${documentId}`, {
         method: 'POST',
       });
-    } catch {
-      const col = mockCollections.find((c) => c.id === collectionId);
-      const doc = mockDocuments.find((d) => d.id === documentId);
-      if (col && doc) {
-        col.documentIds = col.documentIds || [];
-        if (!col.documentIds.includes(documentId)) {
-          col.documentIds.push(documentId);
-          col.documentCount = col.documentIds.length;
-        }
-        doc.collectionIds = doc.collectionIds || [];
-        if (!doc.collectionIds.includes(collectionId)) {
-          doc.collectionIds.push(collectionId);
-        }
+    } catch {}
+    const col = mockCollections.find((c) => c.id === collectionId);
+    const doc = mockDocuments.find((d) => d.id === documentId);
+    if (col && doc) {
+      col.documentIds = col.documentIds || [];
+      if (!col.documentIds.includes(documentId)) {
+        col.documentIds.push(documentId);
+        col.documentCount = col.documentIds.length;
       }
+      doc.collectionIds = doc.collectionIds || [];
+      if (!doc.collectionIds.includes(collectionId)) {
+        doc.collectionIds.push(collectionId);
+      }
+      saveToStorage('doc_assistant_colls', mockCollections);
+      saveToStorage('doc_assistant_docs', mockDocuments);
     }
   },
 
@@ -488,17 +546,18 @@ export const api = {
       await request(`/api/collections/${collectionId}/documents/${documentId}`, {
         method: 'DELETE',
       });
-    } catch {
-      const col = mockCollections.find((c) => c.id === collectionId);
-      const doc = mockDocuments.find((d) => d.id === documentId);
-      if (col) {
-        col.documentIds = (col.documentIds || []).filter((id) => id !== documentId);
-        col.documentCount = col.documentIds.length;
-      }
-      if (doc) {
-        doc.collectionIds = (doc.collectionIds || []).filter((id) => id !== collectionId);
-      }
+    } catch {}
+    const col = mockCollections.find((c) => c.id === collectionId);
+    const doc = mockDocuments.find((d) => d.id === documentId);
+    if (col) {
+      col.documentIds = (col.documentIds || []).filter((id) => id !== documentId);
+      col.documentCount = col.documentIds.length;
     }
+    if (doc) {
+      doc.collectionIds = (doc.collectionIds || []).filter((id) => id !== collectionId);
+    }
+    saveToStorage('doc_assistant_colls', mockCollections);
+    saveToStorage('doc_assistant_docs', mockDocuments);
   },
 
   async getCollectionDocuments(collectionId: string): Promise<Document[]> {
@@ -786,13 +845,20 @@ Question: ${req.message}`,
       const url = documentId
         ? `/api/summaries?documentId=${documentId}`
         : '/api/summaries';
-      return await request<Summary[]>(url);
-    } catch {
-      if (documentId) {
-        return mockSummaries.filter((s) => s.documentId === documentId);
+      const res = await request<Summary[]>(url, { timeoutMs: 3000 });
+      if (res && res.length > 0) {
+        for (const s of res) {
+          if (!mockSummaries.some((ms) => ms.id === s.id)) {
+            mockSummaries.push(s);
+          }
+        }
+        saveToStorage('doc_assistant_sums', mockSummaries);
       }
-      return [...mockSummaries];
+    } catch {}
+    if (documentId) {
+      return mockSummaries.filter((s) => s.documentId === documentId);
     }
+    return [...mockSummaries];
   },
 
   async getSummary(id: string): Promise<Summary> {
@@ -807,10 +873,15 @@ Question: ${req.message}`,
 
   async createSummary(documentId: string, summaryType: SummaryType): Promise<Summary> {
     try {
-      return await request<Summary>('/api/summaries', {
+      const res = await request<Summary>('/api/summaries', {
         method: 'POST',
         body: JSON.stringify({ documentId, summaryType }),
       });
+      if (!mockSummaries.some((s) => s.id === res.id)) {
+        mockSummaries.unshift(res);
+      }
+      saveToStorage('doc_assistant_sums', mockSummaries);
+      return res;
     } catch {
       const doc = mockDocuments.find((d) => d.id === documentId);
       let summaryText = "";
@@ -880,6 +951,7 @@ ${cleanContext.slice(0, 30000)}`,
         createdAt: new Date().toISOString(),
       };
       mockSummaries.unshift(newSummary);
+      saveToStorage('doc_assistant_sums', mockSummaries);
       return newSummary;
     }
   },
@@ -887,20 +959,22 @@ ${cleanContext.slice(0, 30000)}`,
   async deleteSummary(id: string): Promise<void> {
     try {
       await request(`/api/summaries/${id}`, { method: 'DELETE' });
-    } catch {
-      const idx = mockSummaries.findIndex((s) => s.id === id);
-      if (idx !== -1) mockSummaries.splice(idx, 1);
-    }
+    } catch {}
+    const idx = mockSummaries.findIndex((s) => s.id === id);
+    if (idx !== -1) mockSummaries.splice(idx, 1);
+    saveToStorage('doc_assistant_sums', mockSummaries);
   },
 
   // Dashboard Stats & Activity
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const stats = await request<DashboardStats>('/api/dashboard/stats', { timeoutMs: 3500 });
-      try {
-        sessionStorage.setItem('dashboard_stats_cache', JSON.stringify(stats));
-      } catch {}
-      return stats;
+      const stats = await request<DashboardStats>('/api/dashboard/stats', { timeoutMs: 3000 });
+      return {
+        totalDocuments: Math.max(stats.totalDocuments || 0, mockDocuments.length),
+        totalCollections: Math.max(stats.totalCollections || 0, mockCollections.length),
+        totalConversations: Math.max(stats.totalConversations || 0, mockConversations.length),
+        totalSummaries: Math.max(stats.totalSummaries || 0, mockSummaries.length),
+      };
     } catch {
       return {
         totalDocuments: mockDocuments.length,

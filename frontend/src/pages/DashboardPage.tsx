@@ -26,11 +26,19 @@ import toast from 'react-hot-toast';
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Instant optimistic workspace state (0ms latency, zero skeleton freeze)
+  // Instant optimistic workspace state from permanent localStorage
   const [stats, setStats] = useState<DashboardStats>(() => {
     try {
-      const cached = sessionStorage.getItem('dashboard_stats_cache');
-      if (cached) return JSON.parse(cached);
+      const docs = JSON.parse(localStorage.getItem('doc_assistant_docs') || '[]');
+      const colls = JSON.parse(localStorage.getItem('doc_assistant_colls') || '[]');
+      const convs = JSON.parse(localStorage.getItem('doc_assistant_convs') || '[]');
+      const sums = JSON.parse(localStorage.getItem('doc_assistant_sums') || '[]');
+      return {
+        totalDocuments: Array.isArray(docs) ? docs.length : 0,
+        totalCollections: Array.isArray(colls) ? colls.length : 0,
+        totalConversations: Array.isArray(convs) ? convs.length : 0,
+        totalSummaries: Array.isArray(sums) ? sums.length : 0,
+      };
     } catch {}
     return {
       totalDocuments: 0,
@@ -42,24 +50,24 @@ export const DashboardPage: React.FC = () => {
 
   const [recentDocs, setRecentDocs] = useState<Document[]>(() => {
     try {
-      const cached = sessionStorage.getItem('dashboard_recent_docs_cache');
-      if (cached) return JSON.parse(cached);
+      const docs = JSON.parse(localStorage.getItem('doc_assistant_docs') || '[]');
+      if (Array.isArray(docs)) return docs.slice(0, 5);
     } catch {}
     return [];
   });
 
   const [recentConversations, setRecentConversations] = useState<Conversation[]>(() => {
     try {
-      const cached = sessionStorage.getItem('dashboard_recent_convs_cache');
-      if (cached) return JSON.parse(cached);
+      const convs = JSON.parse(localStorage.getItem('doc_assistant_convs') || '[]');
+      if (Array.isArray(convs)) return convs.slice(0, 4);
     } catch {}
     return [];
   });
 
   const [recentSummaries, setRecentSummaries] = useState<Summary[]>(() => {
     try {
-      const cached = sessionStorage.getItem('dashboard_recent_sums_cache');
-      if (cached) return JSON.parse(cached);
+      const sums = JSON.parse(localStorage.getItem('doc_assistant_sums') || '[]');
+      if (Array.isArray(sums)) return sums.slice(0, 4);
     } catch {}
     return [];
   });
@@ -83,30 +91,24 @@ export const DashboardPage: React.FC = () => {
 
       if (results[0].status === 'fulfilled') {
         setStats(results[0].value);
-        try {
-          sessionStorage.setItem('dashboard_stats_cache', JSON.stringify(results[0].value));
-        } catch {}
       }
       if (results[1].status === 'fulfilled') {
         const docs = results[1].value.items || [];
-        setRecentDocs(docs);
-        try {
-          sessionStorage.setItem('dashboard_recent_docs_cache', JSON.stringify(docs));
-        } catch {}
+        if (docs.length > 0) {
+          setRecentDocs(docs);
+        }
       }
       if (results[2].status === 'fulfilled') {
         const convs = (results[2].value || []).slice(0, 4);
-        setRecentConversations(convs);
-        try {
-          sessionStorage.setItem('dashboard_recent_convs_cache', JSON.stringify(convs));
-        } catch {}
+        if (convs.length > 0) {
+          setRecentConversations(convs);
+        }
       }
       if (results[3].status === 'fulfilled') {
         const sums = (results[3].value || []).slice(0, 4);
-        setRecentSummaries(sums);
-        try {
-          sessionStorage.setItem('dashboard_recent_sums_cache', JSON.stringify(sums));
-        } catch {}
+        if (sums.length > 0) {
+          setRecentSummaries(sums);
+        }
       }
     } catch (err) {
       console.warn('Dashboard background sync note:', err);
