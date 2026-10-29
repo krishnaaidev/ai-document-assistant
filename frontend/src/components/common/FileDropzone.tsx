@@ -99,8 +99,8 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
           className={clsx(
             'group relative flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 text-center select-none',
             isDragOver
-              ? 'border-primary-500 bg-primary-50/50 scale-[1.01]'
-              : 'border-neutral-300 hover:border-primary-400 bg-neutral-50/50 hover:bg-neutral-50',
+              ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20 scale-[1.01]'
+              : 'border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 bg-slate-50/50 dark:bg-slate-900/40 hover:bg-slate-50 dark:hover:bg-slate-900/60',
             disabled && 'opacity-60 cursor-not-allowed'
           )}
         >
@@ -108,38 +108,38 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
             className={clsx(
               'w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform duration-200',
               isDragOver
-                ? 'bg-primary-600 text-white scale-110'
-                : 'bg-white text-primary-600 shadow-subtle group-hover:scale-105'
+                ? 'bg-indigo-600 text-white scale-110'
+                : 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm group-hover:scale-105'
             )}
           >
             <UploadCloud className="w-6 h-6" />
           </div>
 
-          <p className="text-sm font-medium text-charcoal-800 mb-1">
-            <span className="text-primary-600 underline">Click to upload</span> or drag and drop
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">
+            <span className="text-indigo-600 dark:text-indigo-400 underline font-semibold">Click to upload</span> or drag and drop
           </p>
-          <p className="text-xs text-charcoal-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             PDF, DOCX, or TXT (up to 20MB)
           </p>
         </div>
       ) : (
-        <div className="border border-neutral-200 bg-white rounded-xl p-4 shadow-subtle">
+        <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 truncate">
-              <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
                 <FileText className="w-5 h-5" />
               </div>
               <div className="truncate">
-                <p className="text-sm font-semibold text-charcoal truncate">{selectedFile.name}</p>
-                <p className="text-xs text-charcoal-400">{formatFileSize(selectedFile.size)}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{selectedFile.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{formatFileSize(selectedFile.size)}</p>
               </div>
             </div>
 
-            {onClear && progress === null && (
+            {onClear && (progress === null || progress === undefined || progress === 0) && (
               <button
                 type="button"
                 onClick={onClear}
-                className="text-charcoal-400 hover:text-charcoal-600 p-1 rounded-lg hover:bg-neutral-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 title="Remove file"
               >
                 <X className="w-4 h-4" />

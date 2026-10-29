@@ -27,7 +27,7 @@ class Settings(BaseSettings):
 
     # Gemini AI
     GEMINI_API_KEY: str = Field(default="", description="Google Gemini API key")
-    GEMINI_MODEL: str = Field(default="gemini-3.5-flash", description="Gemini model name")
+    GEMINI_MODEL: str = Field(default="gemini-3.5-flash-lite", description="Gemini model name")
 
     # Pinecone
     PINECONE_API_KEY: str = Field(default="", description="Pinecone API key")

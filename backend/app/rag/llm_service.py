@@ -56,22 +56,38 @@ class GeminiProvider(BaseLLMProvider):
         try:
             import google.generativeai as genai
             genai.configure(api_key=self.api_key, transport="rest")
+            target_model = self.model_name or "gemini-3.5-flash-lite"
+            if "1.5" in target_model or "2.0" in target_model:
+                target_model = "gemini-3.5-flash-lite"
+            self.model_name = target_model
             self._model = genai.GenerativeModel(self.model_name)
-            logger.info("Google Gemini model '%s' initialized successfully", self.model_name)
+            logger.info("Google Gemini fast model '%s' initialized successfully", self.model_name)
         except Exception as e:
             logger.error("Failed to initialize Google Gemini client: %s", e)
             self._model = None
 
     @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=8),
+        stop=stop_after_attempt(2),
+        wait=wait_exponential(multiplier=1, min=1, max=3),
         reraise=True,
     )
     def _call_gemini_with_retry(self, prompt: str) -> str:
         if self._model is None:
+            self._initialize_gemini()
+        if self._model is None:
             raise RuntimeError("Gemini model is not initialized")
-        response = self._model.generate_content(prompt)
-        return response.text
+        try:
+            response = self._model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            if "not found" in str(e).lower() and self.model_name != "gemini-3.5-flash-lite":
+                logger.warning("Model %s not found, switching to gemini-3.5-flash-lite", self.model_name)
+                import google.generativeai as genai
+                self.model_name = "gemini-3.5-flash-lite"
+                self._model = genai.GenerativeModel("gemini-3.5-flash-lite")
+                response = self._model.generate_content(prompt)
+                return response.text
+            raise
 
     def generate_answer(
         self,

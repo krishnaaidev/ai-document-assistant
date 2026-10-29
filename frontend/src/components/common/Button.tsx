@@ -22,12 +22,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       disabled,
       className,
+      type = 'button',
+      onClick,
       ...props
     },
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none cursor-pointer';
+      'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none cursor-pointer active:scale-[0.98]';
 
     const sizeStyles = {
       sm: 'px-3 py-1.5 text-xs gap-1.5',
@@ -37,7 +39,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantStyles = {
       primary:
-        'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-700 hover:via-indigo-600 hover:to-purple-700 text-white shadow-sm hover:shadow-md hover:shadow-indigo-500/25 active:scale-[0.99] focus:ring-indigo-500',
+        'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-700 hover:via-indigo-600 hover:to-purple-700 text-white shadow-sm hover:shadow-md hover:shadow-indigo-500/25 focus:ring-indigo-500',
       secondary:
         'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm hover:shadow-md hover:shadow-teal-500/25 focus:ring-teal-500',
       outline:
@@ -48,10 +50,23 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white shadow-sm hover:shadow-md hover:shadow-rose-500/25 focus:ring-rose-500',
     };
 
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (disabled || loading) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      if (onClick) {
+        onClick(e);
+      }
+    };
+
     return (
       <button
         ref={ref}
+        type={type}
         disabled={disabled || loading}
+        onClick={handleClick}
         className={clsx(
           baseStyles,
           sizeStyles[size],
@@ -61,12 +76,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          <Loader2 className="w-4 h-4 animate-spin shrink-0 pointer-events-none" />
         ) : (
-          leftIcon && <span className="shrink-0">{leftIcon}</span>
+          leftIcon && <span className="shrink-0 pointer-events-none inline-flex items-center">{leftIcon}</span>
         )}
-        <span>{children}</span>
-        {!loading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
+        <span className="pointer-events-none">{children}</span>
+        {!loading && rightIcon && <span className="shrink-0 pointer-events-none inline-flex items-center">{rightIcon}</span>}
       </button>
     );
   }

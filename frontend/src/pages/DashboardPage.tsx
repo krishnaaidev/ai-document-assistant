@@ -122,16 +122,22 @@ export const DashboardPage: React.FC = () => {
   const handleUploadSubmit = async () => {
     if (!selectedFile) return;
     try {
-      await api.uploadDocument(selectedFile, undefined, (percent) => {
+      setUploadProgress(15);
+      const uploaded = await api.uploadDocument(selectedFile, undefined, (percent) => {
         setUploadProgress(percent);
       });
-      toast.success('Document uploaded and queued for processing');
+      toast.success(`"${selectedFile.name}" uploaded successfully!`);
       setUploadModalOpen(false);
       setSelectedFile(null);
-      setUploadProgress(null);
+      if (uploaded) {
+        setRecentDocs((prev) => [uploaded, ...prev.filter((d) => d.id !== uploaded.id)].slice(0, 5));
+        setStats((prev) => ({ ...prev, totalDocuments: prev.totalDocuments + 1 }));
+      }
       fetchDashboardData();
     } catch (err: any) {
       toast.error(err.message || 'Upload failed');
+    } finally {
+      setUploadProgress(null);
     }
   };
 
