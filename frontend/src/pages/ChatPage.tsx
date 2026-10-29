@@ -177,7 +177,7 @@ export const ChatPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0D111D] shadow-xs overflow-hidden relative">
+    <div className="h-[calc(100vh-10.5rem)] min-h-[460px] flex rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0D111D] shadow-xs overflow-hidden relative">
       {/* Mobile Backdrop */}
       {showMobileSidebar && (
         <div

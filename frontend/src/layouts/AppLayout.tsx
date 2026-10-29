@@ -223,9 +223,9 @@ export default function AppLayout() {
       </aside>
 
       {/* Main content column */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center justify-between h-16 px-4 bg-white dark:bg-[#0D111D] border-b border-slate-200/80 dark:border-slate-800/80">
+        <header className="lg:hidden flex items-center justify-between h-16 px-4 bg-white dark:bg-[#0D111D] border-b border-slate-200/80 dark:border-slate-800/80 shrink-0">
           <div className="flex items-center">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -244,7 +244,7 @@ export default function AppLayout() {
         </header>
 
         {/* Desktop top header bar */}
-        <header className="hidden lg:flex items-center justify-between h-14 px-8 border-b border-slate-200/70 dark:border-slate-800/80 bg-white/60 dark:bg-[#0D111D]/60 backdrop-blur-md sticky top-0 z-20 transition-colors duration-200">
+        <header className="hidden lg:flex items-center justify-between h-14 px-8 border-b border-slate-200/70 dark:border-slate-800/80 bg-white/60 dark:bg-[#0D111D]/60 backdrop-blur-md sticky top-0 z-20 shrink-0 transition-colors duration-200">
           <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
             {engineReady === false ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/50 font-medium">
@@ -266,13 +266,15 @@ export default function AppLayout() {
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto flex flex-col justify-between">
-          <div className="p-4 sm:p-6 lg:p-8 flex-1 max-w-7xl w-full mx-auto">
+        {/* Page content - scrolls smoothly within the viewport */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto min-h-full flex flex-col">
             <Outlet />
           </div>
-          <Footer />
         </main>
+
+        {/* Firmly fixed footer in the bottom */}
+        <Footer className="shrink-0" />
       </div>
     </div>
   );
