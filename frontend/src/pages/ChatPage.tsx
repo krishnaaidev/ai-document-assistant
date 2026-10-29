@@ -25,7 +25,9 @@ import {
   Quote,
   Loader2,
   AlertCircle,
+  X,
 } from 'lucide-react';
+import clsx from 'clsx';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { Input } from '@/components/common/Input';
@@ -77,6 +79,9 @@ export const ChatPage: React.FC = () => {
   // Delete modal
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
+  // Mobile sidebar toggle
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Sync route param with active conversation
@@ -110,6 +115,7 @@ export const ChatPage: React.FC = () => {
   const handleStartNewChat = () => {
     setActiveConvId(undefined);
     setConversationId(undefined);
+    setShowMobileSidebar(false);
     navigate('/chat');
   };
 
@@ -171,10 +177,26 @@ export const ChatPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0D111D] shadow-xs overflow-hidden">
-      {/* Left Panel: Conversations list */}
-      <div className="w-72 bg-slate-50/80 dark:bg-[#0D111D]/90 border-r border-slate-200/80 dark:border-slate-800 flex flex-col shrink-0">
-        <div className="p-4 border-b border-slate-200/80 dark:border-slate-800">
+    <div className="h-[calc(100vh-8rem)] flex rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0D111D] shadow-xs overflow-hidden relative">
+      {/* Mobile Backdrop */}
+      {showMobileSidebar && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-xs"
+          onClick={() => setShowMobileSidebar(false)}
+        />
+      )}
+
+      {/* Left Panel: Conversations list (Desktop permanent, Mobile off-canvas drawer) */}
+      <div
+        className={clsx(
+          'bg-slate-50/90 dark:bg-[#0D111D]/95 border-r border-slate-200/80 dark:border-slate-800 flex flex-col shrink-0 transition-transform duration-200 z-30',
+          'md:static md:translate-x-0 md:w-64 lg:w-72',
+          showMobileSidebar
+            ? 'fixed inset-y-0 left-0 w-72 translate-x-0 shadow-2xl bg-white dark:bg-[#0D111D]'
+            : 'fixed -translate-x-full md:translate-x-0'
+        )}
+      >
+        <div className="p-3.5 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2">
           <Button
             variant="primary"
             className="w-full"
@@ -184,6 +206,13 @@ export const ChatPage: React.FC = () => {
           >
             New Conversation
           </Button>
+          <button
+            type="button"
+            onClick={() => setShowMobileSidebar(false)}
+            className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -202,7 +231,10 @@ export const ChatPage: React.FC = () => {
               return (
                 <div
                   key={conv.id}
-                  onClick={() => navigate(`/chat/${conv.id}`)}
+                  onClick={() => {
+                    navigate(`/chat/${conv.id}`);
+                    setShowMobileSidebar(false);
+                  }}
                   className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-colors ${
                     isSelected
                       ? 'bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 shadow-xs border border-slate-200 dark:border-slate-700 font-semibold'
@@ -253,13 +285,21 @@ export const ChatPage: React.FC = () => {
       {/* Main Area: Chat thread & composer */}
       <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0D111D]">
         {/* Top Chat Subheader with Scope Selector */}
-        <div className="h-14 border-b border-slate-100 dark:border-slate-800 px-6 flex items-center justify-between bg-white dark:bg-[#0D111D] z-10 shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <div className="h-14 border-b border-slate-100 dark:border-slate-800 px-3 sm:px-6 flex items-center justify-between bg-white dark:bg-[#0D111D] z-10 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowMobileSidebar(true)}
+              className="md:hidden p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              title="Recent Chats"
+            >
+              <MessageSquare className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            </button>
+            <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Target Scope:
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <select
                 value={scope.type}
                 onChange={(e) => {
@@ -283,7 +323,7 @@ export const ChatPage: React.FC = () => {
                   onChange={(e) =>
                     setScope({ ...scope, documentId: e.target.value })
                   }
-                  className="text-xs font-medium bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60 max-w-[200px]"
+                  className="text-xs font-medium bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60 max-w-[130px] sm:max-w-[200px]"
                 >
                   {documents.map((d) => (
                     <option key={d.id} value={d.id}>
@@ -299,7 +339,7 @@ export const ChatPage: React.FC = () => {
                   onChange={(e) =>
                     setScope({ ...scope, collectionId: e.target.value })
                   }
-                  className="text-xs font-medium bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60 max-w-[200px]"
+                  className="text-xs font-medium bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/60 max-w-[130px] sm:max-w-[200px]"
                 >
                   {collections.map((c) => (
                     <option key={c.id} value={c.id}>
