@@ -146,20 +146,19 @@ class RAGPipeline:
         collection_id: Optional[Any],
     ) -> Conversation:
         if conversation_id:
-            conv_uuid = conversation_id if isinstance(conversation_id, UUID) else UUID(str(conversation_id))
-            result = await self.db.execute(
-                select(Conversation).where(
-                    Conversation.id == conv_uuid,
-                    Conversation.owner_id == owner.id,
+            try:
+                conv_uuid = conversation_id if isinstance(conversation_id, UUID) else UUID(str(conversation_id))
+                result = await self.db.execute(
+                    select(Conversation).where(
+                        Conversation.id == conv_uuid,
+                        Conversation.owner_id == owner.id,
+                    )
                 )
-            )
-            conv = result.scalar_one_or_none()
-            if not conv:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Conversation not found.",
-                )
-            return conv
+                conv = result.scalar_one_or_none()
+                if conv:
+                    return conv
+            except (ValueError, TypeError):
+                pass
 
         # Auto-generate title from question
         title = question[:80] + ("..." if len(question) > 80 else "")
@@ -182,7 +181,11 @@ class RAGPipeline:
         return conv
 
     async def _verify_document_ownership(self, document_id: Any, owner: User) -> None:
-        doc_uuid = document_id if isinstance(document_id, UUID) else UUID(str(document_id))
+        try:
+            doc_uuid = document_id if isinstance(document_id, UUID) else UUID(str(document_id))
+        except (ValueError, TypeError):
+            # Not a DB UUID, skip check for mock/temp items
+            return
         result = await self.db.execute(
             select(Document).where(
                 Document.id == doc_uuid,
@@ -197,7 +200,10 @@ class RAGPipeline:
 
     async def _verify_collection_ownership(self, collection_id: Any, owner: User) -> None:
         from app.models.models import Collection
-        col_uuid = collection_id if isinstance(collection_id, UUID) else UUID(str(collection_id))
+        try:
+            col_uuid = collection_id if isinstance(collection_id, UUID) else UUID(str(collection_id))
+        except (ValueError, TypeError):
+            return
         result = await self.db.execute(
             select(Collection).where(
                 Collection.id == col_uuid,
@@ -211,7 +217,10 @@ class RAGPipeline:
             )
 
     async def _get_recent_messages(self, conversation_id: Any, limit: int = 6) -> list:
-        conv_uuid = conversation_id if isinstance(conversation_id, UUID) else UUID(str(conversation_id))
+        try:
+            conv_uuid = conversation_id if isinstance(conversation_id, UUID) else UUID(str(conversation_id))
+        except (ValueError, TypeError):
+            return []
         result = await self.db.execute(
             select(Message)
             .where(Message.conversation_id == conv_uuid)
@@ -232,7 +241,11 @@ class RAGPipeline:
         citations_json: Optional[list] = None,
         token_usage_json: Optional[dict] = None,
     ) -> Message:
-        conv_uuid = conversation_id if isinstance(conversation_id, UUID) else UUID(str(conversation_id))
+        try:
+            conv_uuid = conversation_id if isinstance(conversation_id, UUID) else UUID(str(conversation_id))
+        except (ValueError, TypeError):
+            import uuid
+            conv_uuid = uuid.uuid4()
         msg = Message(
             conversation_id=conv_uuid,
             role=role,

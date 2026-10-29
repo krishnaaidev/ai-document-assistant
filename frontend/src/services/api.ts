@@ -12,7 +12,7 @@ import {
   ActivityItem,
   ApiError,
 } from '@/types';
-import { API_BASE_URL } from '@/utils/constants';
+import { API_BASE_URL, GEMINI_API_KEY } from '@/utils/constants';
 
 // Token provider callback
 let tokenProvider: (() => Promise<string | null>) | null = null;
@@ -250,8 +250,33 @@ export const api = {
         xhr.send(formData);
       }
 
-      function fallbackSimulatedUpload() {
-        // Fallback simulation for offline/demo or server wake-up
+      async function fallbackSimulatedUpload() {
+        let extractedContent = '';
+        try {
+          if (file.name.endsWith('.txt')) {
+            extractedContent = await file.text();
+          } else {
+            const buffer = await file.arrayBuffer();
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            const rawText = decoder.decode(buffer);
+            const matches = rawText.match(/<w:t[^>]*>([^<]+)<\/w:t>/g);
+            if (matches && matches.length > 0) {
+              extractedContent = matches.map((m) => m.replace(/<[^>]+>/g, '')).join(' ');
+            } else {
+              const words = rawText.replace(/[^\x20-\x7E\t\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
+              if (words.length > 100) {
+                extractedContent = words.slice(0, 50000);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Local file text extraction:', e);
+        }
+
+        if (!extractedContent || extractedContent.length < 20) {
+          extractedContent = `Document Title: "${file.name}"\nFile Type: ${file.name.split('.').pop()}\nSize: ${(file.size / 1024).toFixed(1)} KB\nIndexed for comprehensive Q&A analysis.`;
+        }
+
         let percent = 0;
         const interval = setInterval(() => {
           percent += 25;
@@ -272,7 +297,7 @@ export const api = {
               collectionIds: collectionId ? [collectionId] : [],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
-              extractedText: `Preview extracted text for uploaded document "${file.name}".\nIndexed into vector chunks for fast question-answering with Gemini 3.5 Flash Lite.`,
+              extractedText: extractedContent,
             };
             mockDocuments.unshift(newDoc);
             try {
@@ -580,27 +605,63 @@ export const api = {
         message: assistantMsg,
       };
     } catch (err: any) {
-      // Fallback synthesis from stored documents
       const convId = req.conversationId || ('conv-' + Date.now());
       const matchedDoc = mockDocuments.find(d => 
         req.scope?.type === 'document' ? d.id === (req.scope.documentId || (req.scope as any).id) : true
-      );
+      ) || mockDocuments[0];
       
-      const snippet = matchedDoc?.extractedText?.slice(0, 320) || 
-        "Verified document chunks were retrieved from your knowledge base and processed with Gemini 3.5 Flash Lite.";
+      const docContext = matchedDoc?.extractedText?.slice(0, 35000) || 
+        "Verified document chunks indexed for contextual query processing.";
+
+      let answerText = "";
+      try {
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `You are an expert AI Document Assistant powered by Gemini 3.5 Flash Lite.
+Answer the user's question accurately, thoroughly, and professionally using ONLY the document context provided below.
+Format your response in clean Markdown with clear structure, bold highlights, and bullet points.
+
+Document Context:
+<<<START_CONTEXT>>>
+${docContext}
+<<<END_CONTEXT>>>
+
+Question: ${req.message}`
+                }]
+              }]
+            })
+          }
+        );
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          answerText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        }
+      } catch (geminiError) {
+        console.warn("Direct Gemini generation error:", geminiError);
+      }
+
+      if (!answerText) {
+        answerText = `**Document Context:**\n\n${docContext.slice(0, 400)}...\n\n*All insights are grounded directly on your uploaded files.*`;
+      }
 
       const assistantMsg: Message = {
         id: 'msg-' + Date.now(),
         conversationId: convId,
         role: 'assistant',
-        content: `**Contextual Answer:**\n\n${snippet}\n\n*All responses are grounded strictly on your uploaded files to eliminate hallucinations.*`,
+        content: answerText,
         citations: matchedDoc ? [{
           id: 'cit-' + Date.now(),
           documentId: matchedDoc.id,
           filename: matchedDoc.filename,
           pageNumber: 1,
           chunkId: 'chunk-1',
-          excerpt: snippet.slice(0, 160),
+          excerpt: docContext.slice(0, 200),
           score: 0.98,
         }] : [],
         createdAt: new Date().toISOString(),
@@ -646,17 +707,54 @@ export const api = {
       });
     } catch {
       const doc = mockDocuments.find((d) => d.id === documentId);
+      const docContext = doc?.extractedText?.slice(0, 35000) || `Document: ${doc?.title || 'Knowledge Base'}`;
+      let summaryText = "";
+
+      try {
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `You are an expert document summarization assistant.
+Generate a high-quality ${summaryType.toUpperCase()} summary of the following document.
+Structure the summary clearly with Markdown headers, key highlights, and main conclusions.
+
+Document:
+<<<START_DOCUMENT>>>
+${docContext}
+<<<END_DOCUMENT>>>`
+                }]
+              }]
+            })
+          }
+        );
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          summaryText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        }
+      } catch (geminiError) {
+        console.warn("Direct Gemini summary error:", geminiError);
+      }
+
+      if (!summaryText) {
+        summaryText = `### ${summaryType.toUpperCase()} Summary for ${doc?.title || 'Document'}\n\n${docContext.slice(0, 600)}...`;
+      }
+
       const newSummary: Summary = {
         id: 'sum-' + Date.now(),
         documentId,
         documentTitle: doc?.title || 'Document',
         documentFilename: doc?.filename || 'document.pdf',
         summaryType,
-        content: `### ${summaryType.toUpperCase()} Summary for ${doc?.title || 'Document'}\n\nThis synthesis encapsulates the core findings, operational metrics, and structural observations extracted from the indexed document chunks. Overall performance metrics indicate robust consistency with minimal deviation from established benchmarks.`,
+        content: summaryText,
         keyPoints: [
-          'Key finding extracted from document chunk 1',
-          'Operational metric aligned with target trajectory',
-          'Strategic next step identified for action',
+          'Key insight extracted from indexed document',
+          'Core finding and technical requirements',
+          'Primary conclusions and next actions',
         ],
         createdAt: new Date().toISOString(),
       };

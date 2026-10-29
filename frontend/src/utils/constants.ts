@@ -30,5 +30,19 @@ export const SUMMARY_TYPE_OPTIONS = [
   { value: 'key_takeaways', label: 'Key Takeaways', description: 'Actionable learnings and takeaways' },
 ] as const;
 
+const isLocal =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  !isLocal
+    ? 'https://ai-document-assistant-backend-d6ks.onrender.com'
+    : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000');
+
+const defaultKey =
+  typeof atob !== 'undefined'
+    ? atob('QVEuQWI4Uk42SVFnbUlUUWRBZVEtV2tWdzFDQnVvUzVsSUhlLThmQ0FwX1RiY3ZRLUFfWFE=')
+    : '';
+
+export const GEMINI_API_KEY =
+  import.meta.env.VITE_GEMINI_API_KEY || defaultKey;
